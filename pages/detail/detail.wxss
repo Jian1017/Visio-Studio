@@ -1,0 +1,386 @@
+/**
+ * Visio Studio 拼豆工坊 - 临摹助手专属样式 (WXSS)
+ */
+
+/* ==========================================================================
+   1. 临摹状态播报板 (Announcer Panel)
+   ========================================================================== */
+.mode-announcer {
+  margin: 16rpx 32rpx 24rpx 32rpx;
+  padding: 16rpx 32rpx;
+  border-radius: 20rpx;
+  border: 1px solid var(--border-glass);
+}
+
+.announcer-inner {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.pulse-dot {
+  width: 16rpx;
+  height: 16rpx;
+  border-radius: 50%;
+  position: relative;
+}
+
+.pulse-dot::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  animation: pulse 1.6s infinite ease-in-out;
+  background: inherit;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); opacity: 0.8; }
+  100% { transform: scale(2.8); opacity: 0; }
+}
+
+.announcer-text {
+  font-size: 24rpx;
+  font-weight: bold;
+}
+
+.text-teal { color: var(--color-teal); }
+.text-pink { color: var(--color-pink); }
+
+.announcer-subtext {
+  font-size: 20rpx;
+  color: var(--text-muted);
+  margin-left: auto;
+}
+
+/* ==========================================================================
+   2. 主体画布与浮动控制器 (Canvas Section)
+   ========================================================================== */
+.canvas-section {
+  position: relative;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin-bottom: 32rpx;
+  padding: 0 32rpx;
+}
+
+.touch-container {
+  width: 100%;
+  height: 686rpx; /* 正方形容器 */
+  border-radius: 24rpx;
+  overflow: hidden;
+  border: 1px solid var(--border-glass);
+  background: #050608;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.6);
+}
+
+.main-canvas {
+  width: 100%;
+  height: 100%;
+}
+
+/* 侧边悬浮工具栏 */
+.canvas-toolbar {
+  position: absolute;
+  right: 56rpx;
+  bottom: 24rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+  z-index: 10;
+}
+
+.tool-btn {
+  width: 76rpx;
+  height: 76rpx;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(20, 22, 30, 0.85) !important;
+  border: 1px solid var(--border-glass);
+  box-shadow: 0 8px 16px rgba(0,0,0,0.4);
+  padding: 0 !important;
+}
+
+.tool-icon {
+  font-size: 38rpx;
+  color: var(--color-teal);
+  font-weight: bold;
+}
+
+/* ==========================================================================
+   3. 横向滚动临摹选色卡 (Tracer Panel)
+   ========================================================================== */
+.tracer-selection-panel {
+  margin: 0 32rpx 32rpx 32rpx;
+  padding: 30rpx;
+}
+
+.panel-header {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 20rpx;
+}
+
+.panel-header-row {
+  display: flex;
+  flex-direction: row !important;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20rpx;
+  width: 100%;
+}
+
+.panel-title-wrap {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.btn-save-export {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+  padding: 14rpx 28rpx !important;
+  background: rgba(138, 43, 226, 0.12) !important;
+  border: 1px solid rgba(138, 43, 226, 0.3) !important;
+  color: #d1b3ff !important;
+  font-size: 22rpx !important;
+  font-weight: bold;
+  border-radius: 28rpx;
+  box-shadow: 0 4px 10px rgba(138, 43, 226, 0.15);
+  transition: all 0.2s ease;
+}
+
+.btn-save-export-hover {
+  background: rgba(138, 43, 226, 0.28) !important;
+  border-color: var(--color-purple) !important;
+  box-shadow: 0 4px 15px rgba(138, 43, 226, 0.35);
+  transform: translateY(-2rpx);
+}
+
+.save-icon {
+  font-size: 26rpx;
+}
+
+.panel-main-title {
+  font-size: 28rpx;
+  font-weight: bold;
+  color: var(--text-primary);
+}
+
+.panel-subtitle {
+  font-size: 20rpx;
+  color: var(--text-muted);
+  margin-top: 4rpx;
+}
+
+.tracer-scroll {
+  display: flex;
+  white-space: nowrap;
+  height: 120rpx;
+  align-items: center;
+  padding-top: 10rpx;
+}
+
+.tracer-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 16rpx 24rpx;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-glass);
+  border-radius: 20rpx;
+  margin-right: 20rpx;
+  transition: all 0.25s cubic-bezier(0.25, 0.8, 0.25, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.chip-bead-preview {
+  width: 32rpx;
+  height: 32rpx;
+  border-radius: 50%;
+  margin-right: 16rpx;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4rpx 8rpx rgba(0,0,0,0.3);
+}
+
+.chip-meta {
+  display: flex;
+  flex-direction: column;
+}
+
+.chip-code {
+  font-size: 24rpx;
+  font-weight: bold;
+  color: var(--text-primary);
+}
+
+.chip-count {
+  font-size: 18rpx;
+  color: var(--text-muted);
+  margin-top: 2rpx;
+}
+
+.chip-symbol-tag {
+  font-size: 20rpx;
+  font-weight: 900;
+  color: var(--color-teal);
+  background: rgba(0, 242, 254, 0.15);
+  border: 1px solid rgba(0, 242, 254, 0.3);
+  padding: 2rpx 8rpx;
+  border-radius: 8rpx;
+  margin-left: 20rpx;
+}
+
+/* 激活态临摹卡片 */
+.active-tracer-chip {
+  border-color: var(--color-pink) !important;
+  background: rgba(255, 0, 127, 0.15) !important;
+  box-shadow: 0 6px 15px rgba(255, 0, 127, 0.2);
+  transform: scale(1.02) translateY(-2rpx);
+}
+
+.active-tracer-chip .chip-symbol-tag {
+  color: var(--text-primary);
+  background: var(--color-pink);
+  border-color: rgba(255, 0, 127, 0.5);
+  box-shadow: 0 0 8px rgba(255, 0, 127, 0.4);
+}
+
+/* ==========================================================================
+   4. 用料与购买清单列表 (Material List)
+   ========================================================================== */
+.material-list-panel {
+  margin: 0 32rpx 80rpx 32rpx;
+  padding: 30rpx;
+}
+
+.material-table {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  margin-top: 24rpx;
+  border-radius: 16rpx;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* 表头 */
+.table-header {
+  display: flex;
+  background: rgba(0, 0, 0, 0.35);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 20rpx 16rpx;
+}
+
+.th-col {
+  font-size: 22rpx;
+  font-weight: bold;
+  color: var(--text-secondary);
+}
+
+/* 表格列宽配置 */
+.col-check { width: 12%; display: flex; justify-content: center; }
+.col-symbol { width: 15%; display: flex; justify-content: center; }
+.col-preview { width: 15%; display: flex; justify-content: center; }
+.col-info { width: 38%; display: flex; align-items: center; }
+.col-qty { width: 20%; display: flex; justify-content: flex-end; align-items: center; }
+
+/* 数据行 */
+.table-row {
+  display: flex;
+  padding: 24rpx 16rpx;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+  transition: all 0.2s ease;
+  align-items: center;
+}
+
+.table-row:last-child {
+  border-bottom: none;
+}
+
+/* 各状态行效果 */
+.row-highlighted {
+  background: rgba(0, 242, 254, 0.06);
+}
+
+.row-checked {
+  opacity: 0.35;
+}
+
+/* 表格内组件 */
+.checkbox-box {
+  width: 32rpx;
+  height: 32rpx;
+  border: 3rpx solid var(--text-muted);
+  border-radius: 8rpx;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.checked-box {
+  border-color: var(--color-teal);
+  background: var(--color-teal);
+}
+
+.checked-box::after {
+  content: "";
+  position: absolute;
+  left: 10rpx;
+  top: 4rpx;
+  width: 8rpx;
+  height: 16rpx;
+  border-right: 4rpx solid var(--text-dark);
+  border-bottom: 4rpx solid var(--text-dark);
+  transform: rotate(45deg);
+}
+
+.table-symbol-badge {
+  font-size: 20rpx;
+  font-weight: bold;
+  color: var(--text-primary);
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--border-glass);
+  padding: 4rpx 12rpx;
+  border-radius: 6rpx;
+}
+
+.table-color-chip {
+  width: 40rpx;
+  height: 40rpx;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+.table-bead-code {
+  font-size: 26rpx;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin-right: 12rpx;
+}
+
+.table-bead-name {
+  font-size: 24rpx;
+  color: var(--text-secondary);
+}
+
+.row-checked .table-bead-name, .row-checked .table-bead-code {
+  text-decoration: line-through;
+}
+
+.table-bead-count {
+  font-size: 32rpx;
+  font-weight: bold;
+  margin-right: 4rpx;
+}
+
+.table-bead-unit {
+  font-size: 20rpx;
+  color: var(--text-muted);
+}

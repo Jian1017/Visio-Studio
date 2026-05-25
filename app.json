@@ -1,0 +1,19 @@
+{
+  "pages": [
+    "pages/index/index",
+    "pages/converter/converter",
+    "pages/detail/detail",
+    "pages/dictionary/dictionary"
+  ],
+  "window": {
+    "backgroundTextStyle": "dark",
+    "navigationBarBackgroundColor": "#0b0c10",
+    "navigationBarTitleText": "Visio Studio 拼豆工坊",
+    "navigationBarTextStyle": "white",
+    "backgroundColor": "#0b0c10",
+    "navigationStyle": "custom"
+  },
+  "sitemapLocation": "sitemap.json",
+  "style": "v2",
+  "lazyCodeLoading": "requiredComponents"
+}

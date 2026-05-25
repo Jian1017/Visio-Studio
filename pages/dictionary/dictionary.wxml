@@ -1,0 +1,86 @@
+<!-- Visio Studio 拼豆工坊 - 色卡百科 -->
+<view class="app-container">
+  <!-- 自定义毛玻璃头部 -->
+  <view class="custom-header" style="height: {{statusBarHeight + navBarHeight}}px;">
+    <view class="header-content" style="margin-top: {{statusBarHeight}}px; height: {{navBarHeight}}px;">
+      <view class="header-back-btn" bindtap="goBack" hover-class="btn-secondary-hover">
+        <view class="header-back-icon"></view>
+      </view>
+      <text class="header-title">拼豆色卡百科</text>
+    </view>
+  </view>
+
+  <view class="app-content" style="padding-top: {{statusBarHeight + navBarHeight + 10}}px;">
+    <!-- 搜索与筛选粘性顶栏 -->
+    <view class="search-sticky-panel glass-panel">
+      <!-- 搜索输入框 -->
+      <view class="search-box glass-card">
+        <view class="search-icon"></view>
+        <input 
+          class="search-input"
+          placeholder="搜索色号(如 H2)、名称(如 白色)..."
+          placeholder-style="color: var(--text-muted);"
+          value="{{searchQuery}}"
+          bindinput="onSearchInput"
+        />
+        <view class="clear-btn" wx:if="{{searchQuery !== ''}}" bindtap="clearSearch"></view>
+      </view>
+
+      <!-- 横向分类滑块 -->
+      <scroll-view scroll-x class="category-scroll" enable-flex>
+        <view 
+          wx:for="{{categories}}" 
+          wx:key="id"
+          class="category-chip {{activeCategory === item.id ? 'active-chip' : ''}}"
+          bindtap="selectCategory"
+          data-id="{{item.id}}"
+        >
+          <text>{{item.name}}</text>
+        </view>
+      </scroll-view>
+    </view>
+
+    <!-- 色卡列表网格 -->
+    <view class="dictionary-container">
+      <view class="color-count-bar">
+        <text class="count-label">已筛选</text>
+        <text class="count-value glow-text-teal">{{filteredColors.length}}</text>
+        <text class="count-label">种颜色</text>
+        <text class="tips-label">（点击卡片复制色卡详情）</text>
+      </view>
+
+      <!-- 空白状态 -->
+      <view class="empty-state" wx:if="{{filteredColors.length === 0}}">
+        <view class="empty-icon"></view>
+        <text class="empty-text">没有找到匹配的色号，换个关键词试试吧~</text>
+      </view>
+
+      <!-- 核心色卡网格 -->
+      <view class="color-grid" wx:else>
+        <view 
+          class="color-card glass-card"
+          hover-class="glass-card-hover"
+          wx:for="{{filteredColors}}"
+          wx:key="code"
+          bindtap="copyColorCode"
+          data-color="{{item}}"
+          style="--bead-color: {{item.hex}};"
+        >
+          <!-- 3D 拟真拼豆颗粒展示 -->
+          <view class="bead-preview-wrap">
+            <view class="bead-3d" style="background-color: {{item.hex}}; box-shadow: 0 4px 12px {{item.hex}}40, inset 0 2rpx 6rpx rgba(255,255,255,0.6), inset 0 -4rpx 10rpx rgba(0,0,0,0.3);"></view>
+            <view class="bead-hole"></view>
+          </view>
+          
+          <!-- 颜色信息 -->
+          <view class="color-info">
+            <text class="bead-code">{{item.code}}</text>
+            <text class="bead-name ellipsis">{{item.name}}</text>
+            <text class="bead-enname ellipsis">{{item.enName}}</text>
+            <text class="bead-hex">{{item.hex}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+</view>

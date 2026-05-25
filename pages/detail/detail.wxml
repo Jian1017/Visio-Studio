@@ -1,0 +1,146 @@
+<!-- Visio Studio 拼豆工坊 - 临摹助手 -->
+<view class="app-container">
+  <!-- 自定义毛玻璃头部 -->
+  <view class="custom-header" style="height: {{statusBarHeight + navBarHeight}}px;">
+    <view class="header-content" style="margin-top: {{statusBarHeight}}px; height: {{navBarHeight}}px;">
+      <view class="header-back-btn" bindtap="goBack" hover-class="btn-secondary-hover">
+        <view class="header-back-icon"></view>
+      </view>
+      <text class="header-title">拼豆临摹助手</text>
+    </view>
+  </view>
+
+  <view class="app-content" style="padding-top: {{statusBarHeight + navBarHeight}}px;">
+    
+    <!-- 1. 临摹状态播报板 -->
+    <view class="mode-announcer glass-panel">
+      <view class="announcer-inner" wx:if="{{selectedColorCode === null}}">
+        <view class="pulse-dot teal-bg"></view>
+        <text class="announcer-text text-teal">常规全景模式 · 双指可平移/缩放</text>
+        <text class="announcer-subtext">点击底部色号，开启拼装专属单色高亮</text>
+      </view>
+      <view class="announcer-inner" wx:else>
+        <view class="pulse-dot pink-bg"></view>
+        <text class="announcer-text text-pink">正在高亮：色号 {{selectedColorCode}}</text>
+        <text class="announcer-subtext">对应齿板孔洞标号为 **“{{pattern.beadCounts[0].code === selectedColorCode ? 'A' : '字符' }}”**</text>
+      </view>
+    </view>
+
+    <!-- 2. 主体画布与浮动控制器 -->
+    <view class="canvas-section">
+      <view 
+        class="touch-container"
+        bindtouchstart="onTouchStart"
+        bindtouchmove="onTouchMove"
+        bindtouchend="onTouchEnd"
+      >
+        <!-- 主网格画板 -->
+        <canvas type="2d" id="gridCanvas" class="main-canvas"></canvas>
+      </view>
+
+      <!-- 侧边悬浮浮窗工具栏 -->
+      <view class="canvas-toolbar">
+        <view class="tool-btn glass-card" hover-class="glass-card-hover" bindtap="zoomIn" title="放大">
+          <text class="tool-icon">+</text>
+        </view>
+        <view class="tool-btn glass-card" hover-class="glass-card-hover" bindtap="zoomOut" title="缩小">
+          <text class="tool-icon">-</text>
+        </view>
+        <view class="tool-btn glass-card" hover-class="glass-card-hover" bindtap="resetZoom" title="复位">
+          <text class="tool-icon">⟲</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 3. 横向滚动临摹选色条 (Tracer Selector) -->
+    <view class="tracer-selection-panel glass-card">
+      <view class="panel-header-row">
+        <view class="panel-title-wrap">
+          <text class="panel-main-title">🎯 临摹色号选择</text>
+          <text class="panel-subtitle">（选中色号自动高亮图纸）</text>
+        </view>
+        <view class="btn-save-export glass-card" hover-class="btn-save-export-hover" bindtap="savePatternImage">
+          <text class="save-icon">💾</text> 保存完整图纸
+        </view>
+      </view>
+      
+      <scroll-view scroll-x class="tracer-scroll" enable-flex>
+        <view 
+          wx:for="{{pattern.beadCounts}}" 
+          wx:key="code"
+          class="tracer-chip {{selectedColorCode === item.code ? 'active-tracer-chip' : ''}}"
+          bindtap="selectColor"
+          data-code="{{item.code}}"
+          style="--chip-color: {{item.hex}};"
+        >
+          <view class="chip-bead-preview" style="background-color: {{item.hex}};"></view>
+          <view class="chip-meta">
+            <text class="chip-code">{{item.code}}</text>
+            <text class="chip-count">{{item.count}} 颗</text>
+          </view>
+          <view class="chip-symbol-tag">{{item.symbol}}</view>
+        </view>
+      </scroll-view>
+    </view>
+
+    <!-- 4. 完整的购豆与准备清单 -->
+    <view class="material-list-panel glass-card">
+      <view class="panel-header">
+        <text class="panel-main-title">📦 视界工坊·拼豆清单统计</text>
+        <text class="panel-subtitle">（核对色号准备豆子）</text>
+      </view>
+
+      <view class="material-table">
+        <!-- 表头 -->
+        <view class="table-header">
+          <view class="th-col col-check">状态</view>
+          <view class="th-col col-symbol">代号</view>
+          <view class="th-col col-preview">颜色</view>
+          <view class="th-col col-info">色号/中文名</view>
+          <view class="th-col col-qty">需求用量</view>
+        </view>
+
+        <!-- 表格行列表 -->
+        <view class="table-body">
+          <view 
+            class="table-row {{checkedCodes[item.code] ? 'row-checked' : ''}} {{selectedColorCode === item.code ? 'row-highlighted' : ''}}"
+            wx:for="{{pattern.beadCounts}}"
+            wx:key="code"
+            bindtap="selectColor"
+            data-code="{{item.code}}"
+          >
+            <!-- 勾选状态（防点空，阻止冒泡） -->
+            <view class="td-col col-check" catchtap="toggleCheck" data-code="{{item.code}}">
+              <view class="checkbox-box {{checkedCodes[item.code] ? 'checked-box' : ''}}"></view>
+            </view>
+
+            <!-- 字符标号 -->
+            <view class="td-col col-symbol">
+              <text class="table-symbol-badge">{{item.symbol}}</text>
+            </view>
+
+            <!-- 仿真色块 -->
+            <view class="td-col col-preview">
+              <view class="table-color-chip" style="background-color: {{item.hex}}; box-shadow: 0 4rpx 10rpx {{item.hex}}50;"></view>
+            </view>
+
+            <!-- 色号名称 -->
+            <view class="td-col col-info">
+              <text class="table-bead-code">{{item.code}}</text>
+              <text class="table-bead-name ellipsis">{{item.name}}</text>
+            </view>
+
+            <!-- 用量数量 -->
+            <view class="td-col col-qty">
+              <text class="table-bead-count glow-text-teal">{{item.count}}</text>
+              <text class="table-bead-unit">颗</text>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 隐藏的导出画布：专门用于渲染带水印的高清白底 PNG 导出版 -->
+  <canvas type="2d" id="exportCanvas" style="width: 3600px; height: 3960px; position: absolute; left: -9999px; top: -9999px; pointer-events: none;"></canvas>
+</view>

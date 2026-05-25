@@ -1,0 +1,81 @@
+<!-- Visio Studio 拼豆工坊 - 首页 -->
+<view class="app-container">
+  <!-- 自定义毛玻璃头部 -->
+  <view class="custom-header" style="height: {{statusBarHeight + navBarHeight}}px;">
+    <view class="header-content" style="margin-top: {{statusBarHeight}}px; height: {{navBarHeight}}px;">
+      <text class="header-title">VISIO STUDIO 拼豆工坊</text>
+    </view>
+  </view>
+
+  <scroll-view scroll-y class="app-content" style="padding-top: {{statusBarHeight + navBarHeight + 20}}px;">
+    <view class="welcome-section">
+      <!-- 视界工坊品牌标识与发光字 -->
+      <view class="brand-badge">内测特供 v1.0</view>
+      <view class="studio-logo">
+        <text class="logo-main">Visio Studio</text>
+        <text class="logo-sub">拼豆智能助手</text>
+      </view>
+      <text class="welcome-desc">
+        欢迎使用 **视界工坊 (Visio Studio)** 拼豆硬件套组独家配套的智能画板与色卡转换小程序。
+      </text>
+    </view>
+
+    <!-- 功能入口区 -->
+    <view class="card-grid">
+      <!-- 卡片一：智能转换器 -->
+      <view class="menu-card glass-card" hover-class="glass-card-hover" bindtap="goToConverter">
+        <view class="card-glow-dot pink-glow"></view>
+        <view class="card-header">
+          <view class="icon-wrap pink-bg">
+            <view class="icon-convert"></view>
+          </view>
+          <text class="card-title">智能图纸转换</text>
+        </view>
+        <text class="card-desc">上传兽设或任意图片，智能降采样为拼豆像素格，自动匹配 Artkal 2.6mm 色卡，输出用量清单。</text>
+        <view class="card-footer">
+          <text class="footer-action glow-text-pink">立即转换</text>
+          <view class="arrow-right pink-arrow"></view>
+        </view>
+      </view>
+
+      <!-- 卡片二：色卡字典 -->
+      <view class="menu-card glass-card" hover-class="glass-card-hover" bindtap="goToDictionary">
+        <view class="card-glow-dot teal-glow"></view>
+        <view class="card-header">
+          <view class="icon-wrap teal-bg">
+            <view class="icon-palette"></view>
+          </view>
+          <text class="card-title">拼豆色卡百科</text>
+        </view>
+        <text class="card-desc">内置 Artkal 2.6mm 软豆官方完整色系数据。支持按色系筛选与编码快捷搜索，DIY 配色好帮手。</text>
+        <view class="card-footer">
+          <text class="footer-action glow-text-teal">快捷查询</text>
+          <view class="arrow-right teal-arrow"></view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 介绍说明 -->
+    <view class="info-section glass-card">
+      <view class="info-title">💡 临摹专属利器：单色高亮</view>
+      <view class="info-content">
+        <view class="info-step">
+          <view class="step-num">1</view>
+          <text class="step-text">在“图纸转换”中上传图片并设定格子数 (如 29x29)；</text>
+        </view>
+        <view class="info-step">
+          <view class="step-num">2</view>
+          <text class="step-text">生成图纸后进入详情，点击底部色号列表；</text>
+        </view>
+        <view class="info-step">
+          <view class="step-num">3</view>
+          <text class="step-text">开启 **“临摹模式”**，即可只亮起该颜色豆子，告别看错行的烦恼。</text>
+        </view>
+      </view>
+      <view class="studio-intro">
+        <text>关于 Visio Studio 视界工坊</text>
+        <text class="studio-subtext">记录世界角落的故事，用两种身份，走同一个世界。</text>
+      </view>
+    </view>
+  </scroll-view>
+</view>

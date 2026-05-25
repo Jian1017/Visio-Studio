@@ -1,0 +1,242 @@
+/**
+ * Visio Studio 拼豆工坊 - 色卡百科专属样式 (WXSS)
+ */
+
+/* ==========================================================================
+   粘性搜索与分类栏
+   ========================================================================== */
+.search-sticky-panel {
+  position: sticky;
+  top: 0;
+  z-index: 99;
+  padding: 24rpx 32rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+  margin-bottom: 24rpx;
+  border-bottom: 1px solid var(--border-glass);
+}
+
+.search-box {
+  display: flex;
+  align-items: center;
+  padding: 16rpx 32rpx;
+  border-radius: 36rpx;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.search-icon {
+  width: 24rpx;
+  height: 24rpx;
+  border: 3rpx solid var(--text-muted);
+  border-radius: 50%;
+  position: relative;
+  margin-right: 16rpx;
+  flex-shrink: 0;
+}
+
+.search-icon::before {
+  content: "";
+  position: absolute;
+  bottom: -6rpx;
+  right: -6rpx;
+  width: 10rpx;
+  height: 3rpx;
+  background: var(--text-muted);
+  transform: rotate(45deg);
+}
+
+.search-input {
+  flex: 1;
+  font-size: 26rpx;
+  color: var(--text-primary);
+}
+
+.clear-btn {
+  width: 32rpx;
+  height: 32rpx;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.clear-btn::before, .clear-btn::after {
+  content: "";
+  position: absolute;
+  top: 14rpx;
+  left: 4rpx;
+  width: 24rpx;
+  height: 4rpx;
+  background: var(--text-muted);
+  border-radius: 2rpx;
+}
+
+.clear-btn::before {
+  transform: rotate(45deg);
+}
+
+.clear-btn::after {
+  transform: rotate(-45deg);
+}
+
+/* 横向滑块 */
+.category-scroll {
+  white-space: nowrap;
+  display: flex;
+  height: 64rpx;
+  align-items: center;
+}
+
+.category-chip {
+  display: inline-flex;
+  padding: 10rpx 28rpx;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-glass);
+  border-radius: 32rpx;
+  margin-right: 16rpx;
+  font-size: 24rpx;
+  color: var(--text-secondary);
+  transition: all 0.2s ease;
+  align-items: center;
+  justify-content: center;
+}
+
+.active-chip {
+  background: linear-gradient(135deg, var(--color-purple) 0%, var(--color-teal) 100%);
+  border-color: rgba(0, 242, 254, 0.4);
+  color: var(--text-primary);
+  font-weight: bold;
+  box-shadow: 0 4px 10px rgba(0, 242, 254, 0.2);
+}
+
+/* ==========================================================================
+   百科列表区
+   ========================================================================== */
+.dictionary-container {
+  padding: 0 32rpx 60rpx 32rpx;
+}
+
+.color-count-bar {
+  display: flex;
+  align-items: center;
+  margin-bottom: 24rpx;
+  font-size: 24rpx;
+  color: var(--text-muted);
+}
+
+.count-value {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: var(--color-teal);
+  margin: 0 6rpx;
+}
+
+.tips-label {
+  margin-left: auto;
+  font-size: 20rpx;
+  color: var(--text-muted);
+}
+
+/* 空状态 */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 120rpx 60rpx;
+  gap: 24rpx;
+}
+
+.empty-icon {
+  width: 80rpx;
+  height: 80rpx;
+  border: 4rpx dashed var(--text-muted);
+  border-radius: 50%;
+  position: relative;
+}
+
+.empty-text {
+  font-size: 26rpx;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+/* 核心网格 */
+.color-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24rpx;
+}
+
+.color-card {
+  display: flex;
+  align-items: center;
+  padding: 24rpx;
+  position: relative;
+  overflow: hidden;
+}
+
+/* 拟真3D拼豆颗粒 */
+.bead-preview-wrap {
+  position: relative;
+  width: 72rpx;
+  height: 72rpx;
+  margin-right: 20rpx;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bead-3d {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 50%;
+  position: relative;
+}
+
+/* 中间熔融孔洞 */
+.bead-hole {
+  position: absolute;
+  width: 22rpx;
+  height: 22rpx;
+  border-radius: 50%;
+  background: #0d0e12; /* 小程序底板色 */
+  box-shadow: inset 0 2rpx 4rpx rgba(0,0,0,0.8), 0 2rpx 2rpx rgba(255,255,255,0.1);
+}
+
+/* 色彩数据信息 */
+.color-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+.bead-code {
+  font-size: 22rpx;
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: 1rpx;
+}
+
+.bead-name {
+  font-size: 26rpx;
+  font-weight: bold;
+  color: var(--text-primary);
+  margin-top: 2rpx;
+}
+
+.bead-enname {
+  font-size: 20rpx;
+  color: var(--text-muted);
+  margin-top: -2rpx;
+  text-transform: capitalize;
+}
+
+.bead-hex {
+  font-size: 18rpx;
+  color: var(--color-teal);
+  font-family: monospace;
+  margin-top: 4rpx;
+  letter-spacing: 0.5rpx;
+}
