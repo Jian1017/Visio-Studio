@@ -1468,4 +1468,31 @@ body.auth-locked #appRoot {
   box-shadow: 0 0 0 3px var(--color-blue-bg) !important;
 }
 
+/* ==================== 11. 智能图纸扫描弹窗特定样式 ==================== */
+.scan-size-btn {
+  transform: translateY(0);
+}
+
+.scan-size-btn:hover {
+  border-color: var(--color-blue) !important;
+  background-color: var(--color-blue-bg) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(26, 115, 232, 0.1);
+}
+
+.scan-size-btn.active {
+  border-color: var(--color-blue) !important;
+  background-color: var(--color-blue) !important;
+  box-shadow: 0 4px 12px rgba(26, 115, 232, 0.25);
+}
+
+.scan-size-btn.active div:first-child {
+  color: #ffffff !important;
+}
+
+.scan-size-btn.active div:last-child {
+  color: rgba(255, 255, 255, 0.85) !important;
+}
+
+
 

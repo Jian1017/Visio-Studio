@@ -440,6 +440,62 @@
     </div>
   </div>
 
+  <!-- 智能识别规格模态框 (Modal Smart Scan Grid Selection) -->
+  <div class="palette-modal" id="scanModal" style="display: none;">
+    <div class="palette-modal-content" style="max-width: 480px;">
+      <div class="palette-modal-header">
+        <h3>📷 智能解析与复原图纸</h3>
+        <button id="btnCloseScanModal" style="border: none; background: none; font-size: 28px; color: #94a3b8; cursor: pointer;">&times;</button>
+      </div>
+      <div class="palette-modal-body" style="padding: 24px;">
+        <p class="palette-modal-tip" style="font-size: 13px; color: #475569; margin-bottom: 20px;">
+          检测到您上传了拼豆图纸图片，为了让 4 点避噪多数派采样还原算法进行完美重建，请选择此图纸的原始网格规格大小：
+        </p>
+        
+        <!-- 智能文件名检测推荐提示 -->
+        <div id="scanAutoDetectAlert" style="display: none; background: var(--color-blue-bg); border: 1px solid var(--color-blue-border); padding: 12px 16px; border-radius: 12px; margin-bottom: 20px; font-size: 13px; color: var(--color-blue); display: flex; align-items: center; gap: 8px;">
+          <span style="font-size: 16px;">💡</span>
+          <span id="scanAutoDetectText">智能推荐：文件名中含有 104x104，已自动为您选中！</span>
+        </div>
+
+        <!-- 规格选择快捷按钮网格 -->
+        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 20px;">
+          <button class="scan-size-btn" data-value="29" style="padding: 16px; border: 2px solid #e2e8f0; background: #ffffff; border-radius: 16px; cursor: pointer; text-align: left; transition: all 0.2s ease;">
+            <div style="font-size: 16px; font-weight: 800; color: #0f172a; margin-bottom: 4px;">29 &times; 29</div>
+            <div style="font-size: 12px; color: #64748b;">单板 (标准规格)</div>
+          </button>
+          <button class="scan-size-btn" data-value="58" style="padding: 16px; border: 2px solid #e2e8f0; background: #ffffff; border-radius: 16px; cursor: pointer; text-align: left; transition: all 0.2s ease;">
+            <div style="font-size: 16px; font-weight: 800; color: #0f172a; margin-bottom: 4px;">58 &times; 58</div>
+            <div style="font-size: 12px; color: #64748b;">四联板 (拼豆图纸)</div>
+          </button>
+          <button class="scan-size-btn" data-value="87" style="padding: 16px; border: 2px solid #e2e8f0; background: #ffffff; border-radius: 16px; cursor: pointer; text-align: left; transition: all 0.2s ease;">
+            <div style="font-size: 16px; font-weight: 800; color: #0f172a; margin-bottom: 4px;">87 &times; 87</div>
+            <div style="font-size: 12px; color: #64748b;">九联板 (复杂图纸)</div>
+          </button>
+          <button class="scan-size-btn" data-value="104" style="padding: 16px; border: 2px solid #e2e8f0; background: #ffffff; border-radius: 16px; cursor: pointer; text-align: left; transition: all 0.2s ease;">
+            <div style="font-size: 16px; font-weight: 800; color: #0f172a; margin-bottom: 4px;">104 &times; 104</div>
+            <div style="font-size: 12px; color: #64748b;">超大板 (精美大图)</div>
+          </button>
+        </div>
+
+        <!-- 自定义规格输入 -->
+        <div style="background: #f8fafc; border-radius: 16px; padding: 16px; border: 1px dashed #e2e8f0; margin-bottom: 24px;">
+          <div style="font-size: 12px; font-weight: 700; color: #475569; margin-bottom: 8px;">其他自定义规格：</div>
+          <div style="display: flex; gap: 8px; align-items: center;">
+            <input type="number" id="scanCustomSizeInput" min="5" max="300" placeholder="请输入规格大小，如 116" style="flex: 1; padding: 10px 14px; border: 1.5px solid #e2e8f0; border-radius: 10px; font-size: 13px; outline: none; transition: border-color 0.2s;">
+            <span style="font-size: 13px; color: #64748b; font-weight: 700;">&times; 规格</span>
+          </div>
+        </div>
+
+        <!-- 确认与取消按钮 -->
+        <div style="display: flex; gap: 12px; justify-content: flex-end;">
+          <button id="btnCancelScan" style="padding: 10px 20px; font-size: 13px; font-weight: 700; border-radius: 10px; border: 1.5px solid #e2e8f0; background: #ffffff; color: #475569; cursor: pointer; transition: all 0.2s;">取消</button>
+          <button id="btnConfirmScan" style="padding: 10px 24px; font-size: 13px; font-weight: 700; border-radius: 10px; border: none; background: var(--color-blue); color: #ffffff; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 12px rgba(26,115,232,0.2);">开始扫描</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- 引入逻辑主入口文件，支持本地物理双击直接运行 (免服务器、100%无CORS拦截限制) -->
   <!-- 已将 colors.js, pixelator.js, app.js 完美内联打包，100% 免疫 file:/// 协议下任何跨域(CORS)和加载顺序拦截 -->
   <script type="text/javascript">
@@ -3972,28 +4028,139 @@ function importProjectFromFile(e) {
   e.target.value = '';
 }
 
+let currentScanFile = null;
+let selectedScanSize = 29;
+
+function initScanModalEvents() {
+  const scanModal = document.getElementById('scanModal');
+  const btnCloseScanModal = document.getElementById('btnCloseScanModal');
+  const btnCancelScan = document.getElementById('btnCancelScan');
+  const btnConfirmScan = document.getElementById('btnConfirmScan');
+  const customSizeInput = document.getElementById('scanCustomSizeInput');
+  const sizeButtons = document.querySelectorAll('.scan-size-btn');
+
+  // Avoid multiple registration
+  if (scanModal.dataset.initialized === 'true') return;
+  scanModal.dataset.initialized = 'true';
+
+  // Toggle active class on preset button click
+  sizeButtons.forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const button = e.currentTarget;
+      sizeButtons.forEach(b => b.classList.remove('active'));
+      button.classList.add('active');
+      selectedScanSize = parseInt(button.dataset.value);
+      customSizeInput.value = ''; // Clear custom input
+    });
+  });
+
+  // Clear presets on custom input focus/change
+  customSizeInput.addEventListener('input', () => {
+    sizeButtons.forEach(b => b.classList.remove('active'));
+    const val = parseInt(customSizeInput.value.trim());
+    if (!isNaN(val) && val > 0) {
+      selectedScanSize = val;
+    }
+  });
+
+  // Hide modal helper
+  const hideScanModal = () => {
+    scanModal.style.display = 'none';
+    const scanImageFileInput = document.getElementById('scanImageFileInput');
+    if (scanImageFileInput) scanImageFileInput.value = '';
+    currentScanFile = null;
+  };
+
+  btnCloseScanModal.addEventListener('click', hideScanModal);
+  btnCancelScan.addEventListener('click', hideScanModal);
+  scanModal.addEventListener('click', (e) => {
+    if (e.target === scanModal) hideScanModal();
+  });
+
+  // Start scanning on confirm
+  btnConfirmScan.addEventListener('click', () => {
+    const customVal = parseInt(customSizeInput.value.trim());
+    if (customVal > 0) {
+      selectedScanSize = customVal;
+    } else {
+      const activeBtn = document.querySelector('.scan-size-btn.active');
+      if (activeBtn) {
+        selectedScanSize = parseInt(activeBtn.dataset.value);
+      }
+    }
+
+    if (isNaN(selectedScanSize) || selectedScanSize <= 0) {
+      alert("⚠️ 请选择或输入有效的图纸网格规格！");
+      return;
+    }
+
+    if (currentScanFile) {
+      const fileToScan = currentScanFile;
+      const sizeToScan = selectedScanSize;
+      hideScanModal();
+      scanBeadChartImage(fileToScan, sizeToScan);
+    }
+  });
+}
+
 function handleScanFileSelect(e) {
   const file = e.target.files[0];
   if (!file) return;
 
-  // 1. 弹出询问对话框，让用户确认该图纸的网格规格大小 (如 29, 58, 87 等)
-  let sizeInput = prompt("📷 [智能扫描已导出图纸]\n\n请输入此图纸的网格规格大小：\n- 输入 29：对应 29x29 的图纸\n- 输入 58：对应 58x58 的图纸\n- 输入 87：对应 87x87 的图纸", "29");
-  if (sizeInput === null) {
-    e.target.value = '';
-    return; // 用户取消
+  currentScanFile = file;
+  
+  // Register listeners
+  initScanModalEvents();
+
+  const scanModal = document.getElementById('scanModal');
+  const sizeButtons = document.querySelectorAll('.scan-size-btn');
+  const customSizeInput = document.getElementById('scanCustomSizeInput');
+  const autoDetectAlert = document.getElementById('scanAutoDetectAlert');
+  const autoDetectText = document.getElementById('scanAutoDetectText');
+
+  // Reset states
+  sizeButtons.forEach(b => b.classList.remove('active'));
+  customSizeInput.value = '';
+  selectedScanSize = 29;
+  
+  let detectedSize = null;
+  // Match layout dimension from filename, e.g. 104x104, 58x58...
+  const nameMatch = file.name.match(/(\d+)\s*[x&*_|-]\s*\1/i) || file.name.match(/(\d+)\s*x\s*(\d+)/i) || file.name.match(/(\d+)/);
+  if (nameMatch) {
+    const parsed = parseInt(nameMatch[1]);
+    if (parsed >= 5 && parsed <= 300) {
+      detectedSize = parsed;
+    }
   }
 
-  const gridSize = parseInt(sizeInput.trim());
-  if (isNaN(gridSize) || gridSize <= 0) {
-    alert("⚠️ 请输入有效的正整数网格规格！");
-    e.target.value = '';
-    return;
+  if (detectedSize) {
+    autoDetectAlert.style.display = 'flex';
+    autoDetectText.innerHTML = `智能推荐：文件名中含有 <strong>${detectedSize}x${detectedSize}</strong> 规格，已自动为您选中！`;
+    
+    let foundPreset = false;
+    sizeButtons.forEach(btn => {
+      if (parseInt(btn.dataset.value) === detectedSize) {
+        btn.classList.add('active');
+        selectedScanSize = detectedSize;
+        foundPreset = true;
+      }
+    });
+
+    if (!foundPreset) {
+      customSizeInput.value = detectedSize;
+      selectedScanSize = detectedSize;
+    }
+  } else {
+    autoDetectAlert.style.display = 'none';
+    const btn29 = document.querySelector('.scan-size-btn[data-value="29"]');
+    if (btn29) btn29.classList.add('active');
+    selectedScanSize = 29;
   }
 
-  // 2. 运行 4 点避噪多数派图纸采样还原算法
-  scanBeadChartImage(file, gridSize);
-
-  // 3. 重置文件 input 的值，允许重复导入相同文件
+  // Display modal
+  scanModal.style.display = 'flex';
+  
+  // Reset input file value to allow duplicate selections
   e.target.value = '';
 }
 
@@ -4003,13 +4170,13 @@ function scanBeadChartImage(file, gridSize) {
     const img = new Image();
     img.onload = function() {
       try {
-        console.log(`[Smart Scanner] Image loaded for scanning: ${img.width}x${img.height}. Grid size: ${gridSize}`);
+        console.log(`[Smart Scanner] Image loaded for scanning: ${img.naturalWidth || img.width}x${img.naturalHeight || img.height}. Grid size: ${gridSize}`);
 
         // 1. 创建高分辨率离屏 canvas 载入原始高清图纸
         const scanCanvas = document.createElement('canvas');
         const sCtx = scanCanvas.getContext('2d');
-        const w = img.width;
-        const h = img.height;
+        const w = img.naturalWidth || img.width;
+        const h = img.naturalHeight || img.height;
         scanCanvas.width = w;
         scanCanvas.height = h;
         sCtx.drawImage(img, 0, 0);
@@ -4024,13 +4191,13 @@ function scanBeadChartImage(file, gridSize) {
         const cellW = w / gridSize;
         const cellH = w / gridSize; // 图纸主体网格部分永远是一个完美的正方形，位于图片的最顶端，高度等于宽度 w
 
-        // 避错多数派投票机制：4点避噪采样
-        // 避开正中心可能存在的字符标识 (如字母/色号) 以及最边缘的网格粗线
+        // 避错多数派投票机制：4点垂直极值采样
+        // 采用垂直中轴附近的极值避噪采样点 (避开正中心字符、左右两侧字符，以及最外侧的网格边界线，采样范围严格控制在安全带内)
         const sampleOffsets = [
-          { x: 0.3, y: 0.3 },
-          { x: 0.7, y: 0.3 },
-          { x: 0.3, y: 0.7 },
-          { x: 0.7, y: 0.7 }
+          { x: 0.40, y: 0.15 },
+          { x: 0.60, y: 0.15 },
+          { x: 0.40, y: 0.85 },
+          { x: 0.60, y: 0.85 }
         ];
 
         for (let gy = 0; gy < gridSize; gy++) {
@@ -4075,6 +4242,42 @@ function scanBeadChartImage(file, gridSize) {
                 bestCode = code;
               }
             });
+
+            // 如果投票出最接近的颜色是白色 'C01'，进行中心区域黑体文字检测，以完美区分白色拼豆与纯白背景
+            if (bestCode === 'C01') {
+              const cx = Math.floor((gx + 0.5) * cellW);
+              const cy = Math.floor((gy + 0.5) * cellH);
+              let hasTextInk = false;
+              
+              // 只有在非边界辅助坐标尺格中才检测文字（辅助坐标尺占 row 0 和 col 0 的 5 倍数格）
+              const isRulerCell = (gy === 0 && gx % 5 === 0) || (gx === 0 && gy % 5 === 0);
+              if (!isRulerCell) {
+                const checkRadius = Math.max(1, Math.floor(cellW * 0.15));
+                for (let dy = -checkRadius; dy <= checkRadius; dy++) {
+                  for (let dx = -checkRadius; dx <= checkRadius; dx++) {
+                    const px = cx + dx;
+                    const py = cy + dy;
+                    if (px >= 0 && px < w && py >= 0 && py < h) {
+                      const idx = (py * w + px) * 4;
+                      const r = data[idx];
+                      const g = data[idx + 1];
+                      const b = data[idx + 2];
+                      const a = data[idx + 3];
+                      // 若透明度高且包含深色文字像素，认定为色号/单字标记
+                      if (a >= 50 && r < 130 && g < 130 && b < 130) {
+                        hasTextInk = true;
+                        break;
+                      }
+                    }
+                  }
+                  if (hasTextInk) break;
+                }
+              }
+              
+              if (!hasTextInk) {
+                bestCode = null; // 无文字标记墨水，清空匹配（视为纯白空白位点）
+              }
+            }
 
             // 当且仅当某色号代码在4个非重合采样点中赢下至少 2 票且不是透明，才确认为该拼豆
             if (bestCode && bestCode !== 'transparent' && maxVotes >= 2) {
