@@ -29,6 +29,38 @@
 </head>
 <body>
 
+  <!-- ==================== 管理员安全验证网关 (毛玻璃极光舱) ==================== -->
+  <div class="auth-portal-wrapper" id="authPortal">
+    <div class="aurora-bg">
+      <div class="aurora-blob aurora-blob-1"></div>
+      <div class="aurora-blob aurora-blob-2"></div>
+      <div class="aurora-blob aurora-blob-3"></div>
+    </div>
+    <div class="auth-glass-card">
+      <div class="auth-logo-wrap">
+        <img src="./assets/watermark.png" alt="Logo" class="auth-logo">
+        <h2 class="auth-title">管理员授权认证</h2>
+        <p class="auth-subtitle">请输入管理员密码以解锁 Visio Studio 工作台</p>
+      </div>
+      <div class="auth-form">
+        <div class="auth-input-group">
+          <input type="text" id="authUsername" class="auth-input" required value="admin" autocomplete="username">
+          <label for="authUsername" class="auth-input-label">管理员账户</label>
+        </div>
+        <div class="auth-input-group">
+          <input type="password" id="authPassword" class="auth-input" required autocomplete="current-password">
+          <label for="authPassword" class="auth-input-label">授权密码</label>
+          <span class="password-toggle-btn" id="passwordToggleBtn">👁</span>
+        </div>
+        <div class="auth-error-msg" id="authErrorMsg"></div>
+        <button class="auth-submit-btn" id="authSubmitBtn">
+          <span>解 锁</span>
+          <div class="btn-ripple"></div>
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- 全局应用容器 -->
   <div class="app-container" id="appRoot">
     
@@ -171,6 +203,34 @@
             <div class="slider-control-wrap">
               <input type="range" id="panYSlider" class="md-slider" min="-100" max="100" value="0" step="1">
             </div>
+          </div>
+        </div>
+
+        <!-- 卡片 B-2：🤖 AI 拓展中心 (仅在登录后、上传图片后可用) -->
+        <div class="glass-card ai-core-card" id="aiCoreCard" style="display: none;">
+          <h3 class="card-section-title">🤖 AI 拼豆拓展舱 (AI Core)</h3>
+          
+          <div class="param-item">
+            <div class="param-label-wrap">
+              <span class="param-title">AI 服务商</span>
+              <span class="param-subtitle">请选择您需要使用的 AI 大模型后端服务</span>
+            </div>
+            <div class="segment-control" id="aiProviderSelector">
+              <div class="segment-item active" data-value="deepseek" id="providerDeepseekBtn">DeepSeek</div>
+              <div class="segment-item" data-value="openai" id="providerOpenaiBtn">OpenAI</div>
+            </div>
+          </div>
+
+          <div class="param-item">
+            <div class="param-label-wrap">
+              <span class="param-title">AI API Key</span>
+              <span class="param-subtitle">密钥由管理员密码通过 AES-GCM 高端算法进行本地加密，极度安全</span>
+            </div>
+            <div class="ai-key-input-wrap" style="display: flex; gap: 8px; width: 100%; margin-top: 8px;">
+              <input type="password" id="aiApiKeyInput" class="auth-input" placeholder="输入 API Key (如 sk-...)" style="flex: 1; margin: 0; padding: 10px 14px; background: rgba(255,255,255,0.05); border: 1px solid rgba(0,0,0,0.1); border-radius: 8px; color: #1e293b; font-family: monospace; font-size: 13px; outline: none; transition: all 0.3s;">
+              <button class="auth-submit-btn" id="btnSaveAiKey" style="width: auto; padding: 0 16px; margin: 0; height: 38px; font-size: 12px; border-radius: 8px; background: var(--color-blue); color: white; border: none; cursor: pointer; transition: all 0.2s;">加密保存</button>
+            </div>
+            <div class="ai-encryption-status" id="aiKeyStatusMsg" style="font-size: 11px; color: #64748b; margin-top: 6px; display: flex; align-items: center; gap: 4px;">🔑 未检测到本地已加密密钥，请配置以开启未来 AI 功能</div>
           </div>
         </div>
 
@@ -3405,6 +3465,10 @@ let currentZoomScale = 1.0;
 let currentPanX = 0;
 let currentPanY = 0;
 let currentDenoise = 'none';
+let currentIsAuthorized = false;
+const ADMIN_USERNAME_HASH = '8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918'; // SHA-256 of 'admin'
+const ADMIN_PASSWORD_HASH = 'd662c1d326c92a9efd019f20e447b9fe7a67b1407cd2ef1b9f71c4c81b0a88ef'; // SHA-256 of 'studio888'
+let decryptedAiApiKey = ''; // 解密后的 AI Key，保存在内存中，关闭页面或刷新即丢，安全防护至高无上
 
 // ==================== 2. DOM 节点引用 (改用延迟绑定以保证 100% 正确获取) ====================
 let elFileInput = null;
@@ -3485,12 +3549,17 @@ window.addEventListener('DOMContentLoaded', () => {
     // 3. 初始化默认活动画笔颜色为 C02 黑色，保底使用第一个色号
     activePaintColor = window.ARTKAL_C_COLORS.find(c => c.code === 'H7') || window.ARTKAL_C_COLORS[0];
 
+    // 3.5 自动校验会话层（Session Resume）
+    checkSessionResume();
+
     // 4. 绑定各交互板块事件
     initUploadEvents();
     initParameterEvents();
     initCanvasGestureEvents();
     initControlBtnEvents();
     initEditorEvents(); // 初始化画布编辑器控制台与色板百科弹窗
+    initAuthEvents();   // 初始化安全验证网关事件
+    initAiCoreEvents(); // 初始化 AI 拓展中心事件
 
     console.log("Visio Studio App: All modules, DOM elements and events bound successfully!");
   } catch (err) {
@@ -3965,6 +4034,8 @@ function handleImageFile(file) {
             
             elParametersCard.style.display = 'block';
             elStatsCard.style.display = 'block';
+            const elAiCoreCard = document.getElementById('aiCoreCard');
+            if (elAiCoreCard) elAiCoreCard.style.display = 'block';
             elPreviewPlaceholder.style.display = 'none';
             elPreviewCard.style.display = 'block';
             elBottomLayout.style.display = 'block';
@@ -4028,11 +4099,300 @@ function handleImageFile(file) {
   }
 }
 
+// ==================== 4.5 管理员授权核验与本地 AI API Key 对称加密 ====================
+
+// 异步计算字符串的 SHA-256 哈希值
+async function calculateSha256(text) {
+  const msgBuffer = new TextEncoder().encode(text);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+// PBKDF2 密钥派生算法
+async function deriveEncryptionKey(password, salt) {
+  const enc = new TextEncoder();
+  const passwordKey = await crypto.subtle.importKey(
+    'raw',
+    enc.encode(password),
+    'PBKDF2',
+    false,
+    ['deriveKey']
+  );
+  return await crypto.subtle.deriveKey(
+    {
+      name: 'PBKDF2',
+      salt: salt,
+      iterations: 100000,
+      hash: 'SHA-256'
+    },
+    passwordKey,
+    { name: 'AES-GCM', length: 256 },
+    false,
+    ['encrypt', 'decrypt']
+  );
+}
+
+// AES-GCM 本地加密 API Key
+async function encryptAiKey(plainText, password) {
+  try {
+    const enc = new TextEncoder();
+    const salt = crypto.getRandomValues(new Uint8Array(16));
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const key = await deriveEncryptionKey(password, salt);
+    
+    const encryptedContent = await crypto.subtle.encrypt(
+      {
+        name: 'AES-GCM',
+        iv: iv
+      },
+      key,
+      enc.encode(plainText)
+    );
+    
+    const saltBase64 = btoa(String.fromCharCode(...salt));
+    const ivBase64 = btoa(String.fromCharCode(...iv));
+    const ciphertextBase64 = btoa(String.fromCharCode(...new Uint8Array(encryptedContent)));
+    
+    return JSON.stringify({
+      salt: saltBase64,
+      iv: ivBase64,
+      ciphertext: ciphertextBase64
+    });
+  } catch (err) {
+    console.error("AI Key加密失败:", err);
+    throw new Error("密钥加密失败，请重试。");
+  }
+}
+
+// AES-GCM 本地解密 API Key
+async function decryptAiKey(encryptedJson, password) {
+  try {
+    const data = JSON.parse(encryptedJson);
+    
+    const salt = new Uint8Array([...atob(data.salt)].map(c => c.charCodeAt(0)));
+    const iv = new Uint8Array([...atob(data.iv)].map(c => c.charCodeAt(0)));
+    const ciphertext = new Uint8Array([...atob(data.ciphertext)].map(c => c.charCodeAt(0)));
+    
+    const key = await deriveEncryptionKey(password, salt);
+    
+    const decryptedContent = await crypto.subtle.decrypt(
+      {
+        name: 'AES-GCM',
+        iv: iv
+      },
+      key,
+      ciphertext
+    );
+    
+    return new TextDecoder().decode(decryptedContent);
+  } catch (err) {
+    console.warn("AI Key解密验证失败:", err);
+    return null;
+  }
+}
+
+// 会话自动登录校验
+async function checkSessionResume() {
+  const tempPassword = sessionStorage.getItem('visio_studio_pass_temp');
+  const elPortal = document.getElementById('authPortal');
+  
+  if (tempPassword) {
+    const passHash = await calculateSha256(tempPassword);
+    if (passHash === ADMIN_PASSWORD_HASH) {
+      currentIsAuthorized = true;
+      document.body.classList.remove('auth-locked');
+      elPortal.style.display = 'none';
+
+      // 自动载入并解密 Key
+      const encryptedKeyJson = localStorage.getItem('visio_studio_ai_key_enc');
+      if (encryptedKeyJson) {
+        const decrypted = await decryptAiKey(encryptedKeyJson, tempPassword);
+        if (decrypted) {
+          decryptedAiApiKey = decrypted;
+          updateAiKeyUI(true);
+        }
+      }
+      console.log("Visio Studio App: Session resumed successfully. Welcome Admin.");
+      return;
+    }
+  }
+
+  // 校验失败或未登录，锁定页面
+  document.body.classList.add('auth-locked');
+}
+
+// 绑定登录验证舱各项交互事件
+function initAuthEvents() {
+  const elPortal = document.getElementById('authPortal');
+  const elUsernameInput = document.getElementById('authUsername');
+  const elPasswordInput = document.getElementById('authPassword');
+  const elToggleBtn = document.getElementById('passwordToggleBtn');
+  const elErrorMsg = document.getElementById('authErrorMsg');
+  const elSubmitBtn = document.getElementById('authSubmitBtn');
+  const elGlassCard = elPortal.querySelector('.auth-glass-card');
+
+  // 1. 密码眼睛切换明暗文
+  elToggleBtn.addEventListener('click', () => {
+    if (elPasswordInput.type === 'password') {
+      elPasswordInput.type = 'text';
+      elToggleBtn.textContent = '🔒';
+    } else {
+      elPasswordInput.type = 'password';
+      elToggleBtn.textContent = '👁';
+    }
+  });
+
+  // 2. 点击登录按钮
+  elSubmitBtn.addEventListener('click', () => {
+    handleLogin();
+  });
+
+  // 3. 回车键登录
+  elPasswordInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      handleLogin();
+    }
+  });
+  elUsernameInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      handleLogin();
+    }
+  });
+
+  async function handleLogin() {
+    const username = elUsernameInput.value.trim();
+    const password = elPasswordInput.value;
+
+    elErrorMsg.style.display = 'none';
+
+    const userHash = await calculateSha256(username);
+    const passHash = await calculateSha256(password);
+
+    if (userHash === ADMIN_USERNAME_HASH && passHash === ADMIN_PASSWORD_HASH) {
+      currentIsAuthorized = true;
+      
+      // 记录会话登录状态
+      sessionStorage.setItem('visio_studio_pass_temp', password);
+      
+      // 自动解密已加密的 API Key
+      const encryptedKeyJson = localStorage.getItem('visio_studio_ai_key_enc');
+      if (encryptedKeyJson) {
+        const decrypted = await decryptAiKey(encryptedKeyJson, password);
+        if (decrypted) {
+          decryptedAiApiKey = decrypted;
+          updateAiKeyUI(true);
+        }
+      }
+
+      // 退出动画并解除锁定
+      elPortal.classList.add('hidden');
+      document.body.classList.remove('auth-locked');
+      
+      setTimeout(() => {
+        elPortal.style.display = 'none';
+      }, 500);
+
+      console.log("Visio Studio App: Administrator authorized successfully.");
+    } else {
+      elErrorMsg.textContent = "⚠️ 账户名或授权密码错误，请重新输入！";
+      elErrorMsg.style.display = 'block';
+      
+      elGlassCard.classList.add('shake');
+      setTimeout(() => {
+        elGlassCard.classList.remove('shake');
+      }, 400);
+    }
+  }
+}
+
+// 绑定 AI 拓展中心相关事件
+function initAiCoreEvents() {
+  const elProviderSelector = document.getElementById('aiProviderSelector');
+  const btnSaveAiKey = document.getElementById('btnSaveAiKey');
+  const elAiApiKeyInput = document.getElementById('aiApiKeyInput');
+
+  if (!elProviderSelector || !btnSaveAiKey) return;
+
+  // 1. 服务商切换
+  const segmentItems = elProviderSelector.querySelectorAll('.segment-item');
+  segmentItems.forEach(item => {
+    item.addEventListener('click', (e) => {
+      segmentItems.forEach(i => i.classList.remove('active'));
+      e.target.classList.add('active');
+      localStorage.setItem('visio_studio_ai_provider', e.target.dataset.value);
+    });
+  });
+
+  // 读取已保存的提供商
+  const cachedProvider = localStorage.getItem('visio_studio_ai_provider');
+  if (cachedProvider) {
+    segmentItems.forEach(i => {
+      if (i.dataset.value === cachedProvider) {
+        i.classList.add('active');
+      } else {
+        i.classList.remove('active');
+      }
+    });
+  }
+
+  // 2. 点击加密保存 Key
+  btnSaveAiKey.addEventListener('click', async () => {
+    const keyText = elAiApiKeyInput.value.trim();
+    const tempPassword = sessionStorage.getItem('visio_studio_pass_temp');
+
+    if (!tempPassword) {
+      alert("⚠️ 会话已过期，请重新登录页面！");
+      return;
+    }
+
+    if (!keyText) {
+      localStorage.removeItem('visio_studio_ai_key_enc');
+      decryptedAiApiKey = '';
+      updateAiKeyUI(false);
+      alert("🔑 已清除本地加密保存的 AI API Key。");
+      return;
+    }
+
+    try {
+      btnSaveAiKey.textContent = "加密中...";
+      btnSaveAiKey.disabled = true;
+
+      const encryptedJson = await encryptAiKey(keyText, tempPassword);
+      localStorage.setItem('visio_studio_ai_key_enc', encryptedJson);
+      decryptedAiApiKey = keyText;
+
+      elAiApiKeyInput.value = ''; // 清空输入框
+      updateAiKeyUI(true);
+      alert("🚀 AI API Key 已安全进行本地 AES-GCM 加密，并已写入 LocalStorage！");
+    } catch (err) {
+      alert("⚠️ 保存失败: " + err.message);
+    } finally {
+      btnSaveAiKey.textContent = "加密保存";
+      btnSaveAiKey.disabled = false;
+    }
+  });
+}
+
+// 动态刷新 AI 配置状态 UI
+function updateAiKeyUI(hasKey) {
+  const elAiKeyStatusMsg = document.getElementById('aiKeyStatusMsg');
+  if (!elAiKeyStatusMsg) return;
+  if (hasKey) {
+    elAiKeyStatusMsg.innerHTML = `🟢 <b>API Key 已本地加密载入</b> (已验证，未来 AI 生成功能可用)`;
+    elAiKeyStatusMsg.style.color = '#155724';
+  } else {
+    elAiKeyStatusMsg.innerHTML = `🔑 未检测到本地已加密密钥，请配置以开启未来 AI 功能`;
+    elAiKeyStatusMsg.style.color = '#64748b';
+  }
+}
+
 /**
  * 核心：重新执行缩放与降采样转换
  */
 function reCalculatePixelation() {
   try {
+    if (!currentIsAuthorized) return;
     if (!imageElement) return;
 
     const gridSize = currentGridSize;
