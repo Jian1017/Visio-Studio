@@ -126,6 +126,52 @@
               <div class="segment-item" data-value="100" id="contrastStrong">强力去模糊</div>
             </div>
           </div>
+
+          <!-- 选项 5：去杂点降噪 -->
+          <div class="param-item" id="paramDenoise">
+            <div class="param-label-wrap">
+              <span class="param-title">去杂点降噪</span>
+              <span class="param-subtitle">平滑渐变色，消除孤立碎豆/噪点，节省买豆成本</span>
+            </div>
+            <div class="segment-control" id="denoiseSelector">
+              <div class="segment-item active" data-value="none" id="denoiseNone">无</div>
+              <div class="segment-item" data-value="medium" id="denoiseMedium">中度降噪</div>
+              <div class="segment-item" data-value="strong" id="denoiseStrong">强力平滑</div>
+            </div>
+          </div>
+
+          <!-- 选项 6：画面聚焦缩放 -->
+          <div class="param-item" id="paramZoom">
+            <div class="param-label-wrap">
+              <span class="param-title">画面缩放 <span class="param-value-badge" id="zoomVal">100%</span></span>
+              <span class="param-subtitle">放大原图主体（如设定头部），制作手掌大小成品</span>
+            </div>
+            <div class="slider-control-wrap">
+              <input type="range" id="zoomSlider" class="md-slider" min="100" max="400" value="100" step="5">
+            </div>
+          </div>
+
+          <!-- 选项 7：画面横向平移 -->
+          <div class="param-item" id="paramPanX">
+            <div class="param-label-wrap">
+              <span class="param-title">横向位移 <span class="param-value-badge" id="panXVal">0%</span></span>
+              <span class="param-subtitle">左右微调聚焦区域</span>
+            </div>
+            <div class="slider-control-wrap">
+              <input type="range" id="panXSlider" class="md-slider" min="-100" max="100" value="0" step="1">
+            </div>
+          </div>
+
+          <!-- 选项 8：画面纵向平移 -->
+          <div class="param-item" id="paramPanY">
+            <div class="param-label-wrap">
+              <span class="param-title">纵向位移 <span class="param-value-badge" id="panYVal">0%</span></span>
+              <span class="param-subtitle">上下微调聚焦区域</span>
+            </div>
+            <div class="slider-control-wrap">
+              <input type="range" id="panYSlider" class="md-slider" min="-100" max="100" value="0" step="1">
+            </div>
+          </div>
         </div>
 
         <!-- 卡片 C：统计项数据板 (仅在上传图片后可用) -->
@@ -3059,7 +3105,7 @@ window.rgbToHex = rgbToHex;
  * @param {String} colorMode - 颜色模式 ('color' | 'bw')
  * @returns {Object} 像素网格和色彩统计清单
  */
-function processPixelData(canvas, ctx, sourceWidth, sourceHeight, targetSize, maxColors = 0, contrast = 0, colorMode = 'color') {
+function processPixelData(canvas, ctx, sourceWidth, sourceHeight, targetSize, maxColors = 0, contrast = 0, colorMode = 'color', denoiseLevel = 'none') {
   // 动态读取 window 的核心配置与算法函数，确保绝对安全的加载顺序
   const { ARTKAL_C_COLORS, matchBeadColor, getPerceptualDistance } = window;
 
@@ -3188,6 +3234,92 @@ function processPixelData(canvas, ctx, sourceWidth, sourceHeight, targetSize, ma
     }
     grid2D.push(row);
   }
+
+  // 4.5 智能去孤立杂点降噪算法 (Majority/Modal Filter)
+  if (denoiseLevel && denoiseLevel !== 'none') {
+    // 创建一个副本用于存储降噪结果，避免原地修改影响后续邻域统计
+    const nextGrid2D = [];
+    for (let y = 0; y < height; y++) {
+      nextGrid2D.push([...grid2D[y]]);
+    }
+
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        const currentCell = grid2D[y][x];
+        if (currentCell === null) continue; // 透明背景不降噪
+
+        // 统计 3x3 邻域 (包含中心本身)
+        const neighbors = [];
+        let sameColorNeighborCount = 0;
+        const colorCounts = {};
+
+        for (let ny = y - 1; ny <= y + 1; ny++) {
+          for (let nx = x - 1; nx <= x + 1; nx++) {
+            if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
+              const neighborCell = grid2D[ny][nx];
+              if (neighborCell !== null) {
+                neighbors.push(neighborCell);
+                // 统计邻域颜色频次
+                const code = neighborCell.code;
+                if (!colorCounts[code]) {
+                  colorCounts[code] = { bead: neighborCell, count: 0 };
+                }
+                colorCounts[code].count++;
+
+                // 如果是邻域中的其他像素，且颜色相同
+                if ((nx !== x || ny !== y) && code === currentCell.code) {
+                  sameColorNeighborCount++;
+                }
+              }
+            }
+          }
+        }
+
+        // 判断是否为孤立点
+        let isIsolated = false;
+        if (denoiseLevel === 'medium' && sameColorNeighborCount <= 1) {
+          isIsolated = true;
+        } else if (denoiseLevel === 'strong' && sameColorNeighborCount <= 2) {
+          isIsolated = true;
+        }
+
+        if (isIsolated && neighbors.length > 0) {
+          // 寻找 3x3 邻域中频次最高的颜色
+          let maxCount = -1;
+          let majorityBead = currentCell;
+
+          for (const code in colorCounts) {
+            if (colorCounts[code].count > maxCount) {
+              maxCount = colorCounts[code].count;
+              majorityBead = colorCounts[code].bead;
+            }
+          }
+          nextGrid2D[y][x] = { ...majorityBead };
+        }
+      }
+    }
+    
+    // 用降噪后的网格更新 grid2D
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        grid2D[y][x] = nextGrid2D[y][x];
+      }
+    }
+
+    // 重新统计 beadHistogram
+    beadHistogram = {};
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        const cell = grid2D[y][x];
+        if (cell !== null) {
+          if (!beadHistogram[cell.code]) {
+            beadHistogram[cell.code] = { bead: cell, count: 0 };
+          }
+          beadHistogram[cell.code].count++;
+        }
+      }
+    }
+  }
   
   // 5. 整理最终的色彩清单数据
   const beadCounts = Object.values(beadHistogram)
@@ -3224,7 +3356,7 @@ function processPixelData(canvas, ctx, sourceWidth, sourceHeight, targetSize, ma
     beadCounts: beadCounts,
     width: width,
     height: height,
-    totalBeads: finalGrid.filter(cell => cell !== null).length
+    totalBeads: Object.values(beadHistogram).reduce((sum, item) => sum + item.count, 0)
   };
 }
 
@@ -3269,6 +3401,10 @@ let currentGridSize = 29;
 let currentColorMode = 'color';
 let currentMaxColors = 16;
 let currentContrast = 0;
+let currentZoomScale = 1.0;
+let currentPanX = 0;
+let currentPanY = 0;
+let currentDenoise = 'none';
 
 // ==================== 2. DOM 节点引用 (改用延迟绑定以保证 100% 正确获取) ====================
 let elFileInput = null;
@@ -3468,6 +3604,45 @@ function initParameterEvents() {
       currentContrast = parseInt(e.target.dataset.value);
       reCalculatePixelation();
     });
+  });
+
+  // 5. 去杂点降噪
+  const denoiseItems = document.querySelectorAll('#denoiseSelector .segment-item');
+  denoiseItems.forEach(item => {
+    item.addEventListener('click', (e) => {
+      denoiseItems.forEach(i => i.classList.remove('active'));
+      e.target.classList.add('active');
+      
+      currentDenoise = e.target.dataset.value;
+      reCalculatePixelation();
+    });
+  });
+
+  // 6. 画面聚焦缩放 (Zoom)
+  const zoomSlider = document.getElementById('zoomSlider');
+  const zoomVal = document.getElementById('zoomVal');
+  zoomSlider.addEventListener('input', (e) => {
+    currentZoomScale = parseFloat(e.target.value) / 100.0;
+    zoomVal.textContent = e.target.value + '%';
+    reCalculatePixelation();
+  });
+
+  // 7. 画面横向平移 (Pan X)
+  const panXSlider = document.getElementById('panXSlider');
+  const panXVal = document.getElementById('panXVal');
+  panXSlider.addEventListener('input', (e) => {
+    currentPanX = parseFloat(e.target.value);
+    panXVal.textContent = (currentPanX > 0 ? '+' : '') + currentPanX + '%';
+    reCalculatePixelation();
+  });
+
+  // 8. 画面纵向平移 (Pan Y)
+  const panYSlider = document.getElementById('panYSlider');
+  const panYVal = document.getElementById('panYVal');
+  panYSlider.addEventListener('input', (e) => {
+    currentPanY = parseFloat(e.target.value);
+    panYVal.textContent = (currentPanY > 0 ? '+' : '') + currentPanY + '%';
+    reCalculatePixelation();
   });
 }
 
@@ -3794,6 +3969,38 @@ function handleImageFile(file) {
             elPreviewCard.style.display = 'block';
             elBottomLayout.style.display = 'block';
             
+            // 重置聚焦与降噪参数为初始状态
+            currentZoomScale = 1.0;
+            currentPanX = 0;
+            currentPanY = 0;
+            currentDenoise = 'none';
+
+            const zoomSlider = document.getElementById('zoomSlider');
+            if (zoomSlider) zoomSlider.value = 100;
+            const zoomVal = document.getElementById('zoomVal');
+            if (zoomVal) zoomVal.textContent = '100%';
+
+            const panXSlider = document.getElementById('panXSlider');
+            if (panXSlider) panXSlider.value = 0;
+            const panXVal = document.getElementById('panXVal');
+            if (panXVal) panXVal.textContent = '0%';
+
+            const panYSlider = document.getElementById('panYSlider');
+            if (panYSlider) panYSlider.value = 0;
+            const panYVal = document.getElementById('panYVal');
+            if (panYVal) panYVal.textContent = '0%';
+
+            const denoiseItems = document.querySelectorAll('#denoiseSelector .segment-item');
+            if (denoiseItems.length > 0) {
+              denoiseItems.forEach(i => {
+                if (i.dataset.value === 'none') {
+                  i.classList.add('active');
+                } else {
+                  i.classList.remove('active');
+                }
+              });
+            }
+
             resetViewport();
             reCalculatePixelation();
           } catch (err2) {
@@ -3835,20 +4042,36 @@ function reCalculatePixelation() {
     elPixelCanvas.width = gridSize;
     elPixelCanvas.height = gridSize;
 
-    // 2. 计算原比例 center-contain 居中拟合边界（防止拉伸且不裁剪细节）
+    // 2. 根据聚焦缩放与平移计算源裁剪区域 (Source Clipping)
     const imgWidth = imageElement.width;
     const imgHeight = imageElement.height;
+    
+    const sw = imgWidth / currentZoomScale;
+    const sh = imgHeight / currentZoomScale;
+    
+    const defaultSx = (imgWidth - sw) / 2;
+    const defaultSy = (imgHeight - sh) / 2;
+    const maxShiftX = imgWidth - sw;
+    const maxShiftY = imgHeight - sh;
+    
+    let sx = defaultSx + (currentPanX / 100) * (maxShiftX / 2);
+    let sy = defaultSy + (currentPanY / 100) * (maxShiftY / 2);
+    
+    sx = Math.max(0, Math.min(imgWidth - sw, sx));
+    sy = Math.max(0, Math.min(imgHeight - sh, sy));
+
+    // 计算原比例 center-contain 居中拟合边界（防止拉伸且不裁剪细节）
     let dx = 0, dy = 0;
     let dWidth = gridSize;
     let dHeight = gridSize;
 
-    if (imgWidth > imgHeight) {
+    if (sw > sh) {
       // 宽图：宽度贴边，上下留白（透明）
-      dHeight = gridSize * (imgHeight / imgWidth);
+      dHeight = gridSize * (sh / sw);
       dy = (gridSize - dHeight) / 2;
-    } else if (imgHeight > imgWidth) {
+    } else if (sh > sw) {
       // 长图：高度贴边，左右留白（透明）
-      dWidth = gridSize * (imgWidth / imgHeight);
+      dWidth = gridSize * (sw / sh);
       dx = (gridSize - dWidth) / 2;
     }
 
@@ -3856,11 +4079,11 @@ function reCalculatePixelation() {
     ctx.clearRect(0, 0, gridSize, gridSize);
     ctx.imageSmoothingEnabled = false;
 
-    // 4. 将图片完整居中缩放到小 Canvas 上
-    ctx.drawImage(imageElement, 0, 0, imgWidth, imgHeight, dx, dy, dWidth, dHeight);
+    // 4. 将图片聚焦剪裁区域居中缩放到小 Canvas 上
+    ctx.drawImage(imageElement, sx, sy, sw, sh, dx, dy, dWidth, dHeight);
 
     // 5. 执行色彩分析和映射核心
-    pixelResult = window.processPixelData(elPixelCanvas, ctx, gridSize, gridSize, gridSize, currentMaxColors, currentContrast, currentColorMode);
+    pixelResult = window.processPixelData(elPixelCanvas, ctx, gridSize, gridSize, gridSize, currentMaxColors, currentContrast, currentColorMode, currentDenoise);
 
     if (!pixelResult || !pixelResult.grid) {
       throw new Error("像素化核心返回数据结构异常，匹配结果为空！");
