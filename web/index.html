@@ -132,11 +132,15 @@
                 📤 导出文件
               </button>
             </div>
-            <div class="project-import-wrap" style="margin-top: 8px; width: 100%;">
-              <button class="btn-primary" id="btnTriggerImport" style="width: 100%; padding: 10px; font-size: 13px; border-radius: 8px; height: 38px; display: flex; align-items: center; justify-content: center; gap: 4px; background: rgba(255,255,255,0.05); border: 1px dashed rgba(0,0,0,0.2); color: #475569;">
-                📥 导入工程文件 (.bead)
+            <div class="project-import-wrap" style="margin-top: 8px; width: 100%; display: flex; gap: 8px;">
+              <button class="btn-primary" id="btnTriggerImport" style="flex: 1; padding: 10px; font-size: 13px; border-radius: 8px; height: 38px; display: flex; align-items: center; justify-content: center; gap: 4px; background: rgba(255,255,255,0.05); border: 1px dashed rgba(0,0,0,0.2); color: #475569;">
+                📥 导入工程 (.bead)
+              </button>
+              <button class="btn-primary" id="btnTriggerScan" style="flex: 1; padding: 10px; font-size: 13px; border-radius: 8px; height: 38px; display: flex; align-items: center; justify-content: center; gap: 4px; background: rgba(255,255,255,0.05); border: 1px dashed rgba(0,0,0,0.2); color: #475569;">
+                📷 扫描图纸图片
               </button>
               <input type="file" id="projectFileInput" accept=".bead,.json" style="display: none;">
+              <input type="file" id="scanImageFileInput" accept="image/*" style="display: none;">
             </div>
           </div>
 
@@ -3674,6 +3678,8 @@ function initProjectEvents() {
   const btnExportProject = document.getElementById('btnExportProject');
   const btnTriggerImport = document.getElementById('btnTriggerImport');
   const projectFileInput = document.getElementById('projectFileInput');
+  const btnTriggerScan = document.getElementById('btnTriggerScan');
+  const scanImageFileInput = document.getElementById('scanImageFileInput');
 
   if (btnBlank29) btnBlank29.addEventListener('click', () => createBlankBoard(29));
   if (btnBlank58) btnBlank58.addEventListener('click', () => createBlankBoard(58));
@@ -3685,6 +3691,11 @@ function initProjectEvents() {
   if (btnTriggerImport && projectFileInput) {
     btnTriggerImport.addEventListener('click', () => projectFileInput.click());
     projectFileInput.addEventListener('change', importProjectFromFile);
+  }
+
+  if (btnTriggerScan && scanImageFileInput) {
+    btnTriggerScan.addEventListener('click', () => scanImageFileInput.click());
+    scanImageFileInput.addEventListener('change', handleScanFileSelect);
   }
 
   // 初始化时载入一次浏览器的最近草稿
@@ -3959,6 +3970,189 @@ function importProjectFromFile(e) {
   
   // 重置文件 input 的值，允许重复导入相同文件
   e.target.value = '';
+}
+
+function handleScanFileSelect(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  // 1. 弹出询问对话框，让用户确认该图纸的网格规格大小 (如 29, 58, 87 等)
+  let sizeInput = prompt("📷 [智能扫描已导出图纸]\n\n请输入此图纸的网格规格大小：\n- 输入 29：对应 29x29 的图纸\n- 输入 58：对应 58x58 的图纸\n- 输入 87：对应 87x87 的图纸", "29");
+  if (sizeInput === null) {
+    e.target.value = '';
+    return; // 用户取消
+  }
+
+  const gridSize = parseInt(sizeInput.trim());
+  if (isNaN(gridSize) || gridSize <= 0) {
+    alert("⚠️ 请输入有效的正整数网格规格！");
+    e.target.value = '';
+    return;
+  }
+
+  // 2. 运行 4 点避噪多数派图纸采样还原算法
+  scanBeadChartImage(file, gridSize);
+
+  // 3. 重置文件 input 的值，允许重复导入相同文件
+  e.target.value = '';
+}
+
+function scanBeadChartImage(file, gridSize) {
+  const reader = new FileReader();
+  reader.onload = function(evt) {
+    const img = new Image();
+    img.onload = function() {
+      try {
+        console.log(`[Smart Scanner] Image loaded for scanning: ${img.width}x${img.height}. Grid size: ${gridSize}`);
+
+        // 1. 创建高分辨率离屏 canvas 载入原始高清图纸
+        const scanCanvas = document.createElement('canvas');
+        const sCtx = scanCanvas.getContext('2d');
+        const w = img.width;
+        const h = img.height;
+        scanCanvas.width = w;
+        scanCanvas.height = h;
+        sCtx.drawImage(img, 0, 0);
+
+        const imgData = sCtx.getImageData(0, 0, w, h);
+        const data = imgData.data;
+
+        // 2. 初始化 2D 网格与统计
+        const grid2D = [];
+        const beadHistogram = {};
+
+        const cellW = w / gridSize;
+        const cellH = h / gridSize;
+
+        // 避错多数派投票机制：4点避噪采样
+        // 避开正中心可能存在的字符标识 (如字母/色号) 以及最边缘的网格粗线
+        const sampleOffsets = [
+          { x: 0.3, y: 0.3 },
+          { x: 0.7, y: 0.3 },
+          { x: 0.3, y: 0.7 },
+          { x: 0.7, y: 0.7 }
+        ];
+
+        for (let gy = 0; gy < gridSize; gy++) {
+          const row = [];
+          for (let gx = 0; gx < gridSize; gx++) {
+            const votes = {};
+
+            // 四点采样
+            sampleOffsets.forEach(offset => {
+              const px = Math.floor((gx + offset.x) * cellW);
+              const py = Math.floor((gy + offset.y) * cellH);
+              
+              // 边界约束保护
+              const safePx = Math.max(0, Math.min(w - 1, px));
+              const safePy = Math.max(0, Math.min(h - 1, py));
+              const idx = (safePy * w + safePx) * 4;
+
+              const r = data[idx];
+              const g = data[idx + 1];
+              const b = data[idx + 2];
+              const a = data[idx + 3];
+
+              // 透明度过低视为透明
+              if (a < 80) {
+                votes['transparent'] = (votes['transparent'] || 0) + 1;
+                return;
+              }
+
+              // 对色号库进行最接近颜色匹配
+              const matchedBead = window.matchBeadColor([r, g, b]);
+              if (matchedBead) {
+                votes[matchedBead.code] = (votes[matchedBead.code] || 0) + 1;
+              }
+            });
+
+            // 统计得票数最高的色号
+            let bestCode = null;
+            let maxVotes = 0;
+            Object.keys(votes).forEach(code => {
+              if (votes[code] > maxVotes) {
+                maxVotes = votes[code];
+                bestCode = code;
+              }
+            });
+
+            // 当且仅当某色号代码在4个非重合采样点中赢下至少 2 票且不是透明，才确认为该拼豆
+            if (bestCode && bestCode !== 'transparent' && maxVotes >= 2) {
+              const matchedBead = window.ARTKAL_C_COLORS.find(c => c.code === bestCode);
+              row.push({ ...matchedBead, symbol: matchedBead.code });
+
+              // 频次统计
+              if (!beadHistogram[bestCode]) {
+                beadHistogram[bestCode] = { bead: matchedBead, count: 0 };
+              }
+              beadHistogram[bestCode].count++;
+            } else {
+              row.push(null);
+            }
+          }
+          grid2D.push(row);
+        }
+
+        // 3. 整理最终的色彩清单数据
+        const beadCounts = Object.values(beadHistogram)
+          .sort((a, b) => b.count - a.count)
+          .map((item, index) => {
+            return {
+              ...item.bead,
+              count: item.count,
+              symbol: item.bead.code
+            };
+          });
+
+        // 4. 重算总豆数，写回全局缓存
+        pixelResult = {
+          grid: grid2D,
+          beadCounts: beadCounts,
+          width: gridSize,
+          height: gridSize,
+          totalBeads: Object.values(beadHistogram).reduce((sum, item) => sum + item.count, 0),
+          isBlankBoard: false
+        };
+
+        // 5. 重置视口与参数
+        imageElement = null; // 清空底层参考图
+        offsetX = 0;
+        offsetY = 0;
+        scale = 1.0;
+
+        // 6. 更新看板与 UI 显示
+        elStatTotalBeads.textContent = pixelResult.totalBeads;
+        elStatUniqueColors.textContent = beadCounts.length;
+        elStatGridDimensions.textContent = `${gridSize}x${gridSize}`;
+
+        elParametersCard.style.display = 'none'; // 扫描还原后作为独立图纸编辑，锁定参数调节
+        elStatsCard.style.display = 'block';
+        elPreviewPlaceholder.style.display = 'none';
+        elPreviewCard.style.display = 'block';
+        elBottomLayout.style.display = 'block';
+
+        // 启用暂存与下载按钮
+        document.getElementById('btnSaveLocal').removeAttribute('disabled');
+        document.getElementById('btnExportProject').removeAttribute('disabled');
+
+        // 7. 重绘三端画布
+        drawPreview();
+        drawTracerChips();
+        drawMaterialTable();
+
+        alert(`🎉 智能扫描与复原成功！已从导出的图纸中完美重构了 ${gridSize}x${gridSize} 的高保真拼豆格盘，包含 ${pixelResult.totalBeads} 颗拼豆、${beadCounts.length} 种色号。您现在可以直接在白画板上进行修改、橡皮擦除或重新导出啦！`);
+      } catch (err) {
+        alert("⚠️ 图纸智能解析识别失败: " + err.message);
+      }
+    };
+    img.onerror = function() {
+      alert("⚠️ 图纸图片文件载入失败，无法解析。");
+    };
+    img.src = evt.target.result;
+  };
+  
+  // 必须使用 readAsDataURL 以便能够生成有效的二进制图片 Base64 数据源
+  reader.readAsDataURL(file);
 }
 
 /**
