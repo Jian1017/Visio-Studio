@@ -4781,9 +4781,20 @@ function exportHighResPattern() {
   const ctx = canvas.getContext('2d');
   
   const exportWidth = 3600;
-  const exportHeight = 3960;
   const size = pixelResult.width;
   const grid = pixelResult.grid;
+  const beadCounts = pixelResult.beadCounts || [];
+
+  // 计算底部的配色图例所需高度
+  // 每行 6 个色号
+  const numCols = 6;
+  const numRows = Math.ceil(beadCounts.length / numCols);
+  const rowHeight = 90;
+  const legendPadding = 200; // 包含标题和上下留白
+  const legendHeight = beadCounts.length > 0 ? (numRows * rowHeight + legendPadding) : 0;
+
+  // 总高度：3600 (主图网格) + 360 (品牌统计栏) + 动态图例高度
+  const exportHeight = 3600 + 360 + legendHeight;
 
   // 2. 离屏 Canvas 重置像素尺寸
   canvas.width = exportWidth;
@@ -4885,6 +4896,62 @@ function exportHighResPattern() {
   ctx.fillStyle = '#64748B';
   ctx.font = '500 52px sans-serif';
   ctx.fillText(`图纸规格: ${size}x${size} 单板 | 豆子用量: ${pixelResult.totalBeads} 颗 | Web无损图纸`, 100, 3820);
+
+  // I. 绘制底部色号图例栏 (颜色 + 色号 + 用量)
+  if (beadCounts.length > 0) {
+    // 1. 绘制一条精致的分割线
+    ctx.strokeStyle = '#E2E8F0';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(100, 3960);
+    ctx.lineTo(exportWidth - 100, 3960);
+    ctx.stroke();
+
+    // 2. 绘制 "配色及用量清单 (Artkal 色号)" 标题
+    ctx.fillStyle = '#0F172A';
+    ctx.font = 'bold 64px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('配色及用量清单 (Artkal 色号)', 100, 4030);
+
+    // 3. 绘制每个色号项
+    const startX = 100;
+    const startY = 4100; // 在标题下方
+    const colWidth = (exportWidth - 200) / numCols;
+
+    beadCounts.forEach((item, index) => {
+      const r = index % numCols;
+      const c = Math.floor(index / numCols);
+      const itemX = startX + r * colWidth;
+      const itemY = startY + c * rowHeight;
+
+      // A. 绘制拼豆彩色圆身
+      ctx.beginPath();
+      ctx.arc(itemX + 30, itemY + 45, 30, 0, 2 * Math.PI);
+      ctx.fillStyle = item.hex;
+      ctx.fill();
+
+      // B. 绘制灰色描边，防止白色/浅色豆子看不清
+      ctx.strokeStyle = '#E2E8F0';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+
+      // C. 绘制白色内衬孔洞
+      ctx.beginPath();
+      ctx.arc(itemX + 30, itemY + 45, 30 / 3.5, 0, 2 * Math.PI);
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fill();
+
+      // D. 绘制色号和用量文本 (例如: H2 (124颗))
+      ctx.fillStyle = '#0F172A';
+      ctx.font = 'bold 42px sans-serif';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      
+      const displayText = `${item.code} (${item.count}颗)`;
+      ctx.fillText(displayText, itemX + 80, itemY + 45);
+    });
+  }
 
   // H. 安全同步载入 watermark.png
   const watermarkImg = new Image();
