@@ -97,6 +97,55 @@
               </div>
               <p class="drop-zone-main-text">将您的设定图拖到这里，或点击上传</p>
               <p class="drop-zone-sub-text">支持 PNG, JPG, JPEG 格式图片</p>
+        </div>
+
+        <!-- 卡片 A-2：🛠️ 空白画板与工程管理 (总是可用) -->
+        <div class="glass-card project-card" id="projectCard">
+          <h3 class="card-section-title">🛠️ 空白画板与工程管理</h3>
+          
+          <!-- 选项 1：新建空白板 -->
+          <div class="param-item">
+            <div class="param-label-wrap">
+              <span class="param-title">新建空白画板</span>
+              <span class="param-subtitle">直接创建一个空白格盘进行自由创作</span>
+            </div>
+            <div class="segment-control" id="blankBoardSelector" style="margin-top: 8px;">
+              <div class="segment-item" data-value="29" id="btnBlank29">单板 (29x29)</div>
+              <div class="segment-item" data-value="58" id="btnBlank58">四联板 (58x58)</div>
+              <div class="segment-item" data-value="87" id="btnBlank87">九联板 (87x87)</div>
+            </div>
+          </div>
+
+          <!-- 选项 2：工程文件保存与导入 -->
+          <div class="param-item" style="border-top: 1px solid rgba(255,255,255,0.06); padding-top: 12px; margin-top: 12px;">
+            <div class="param-label-wrap">
+              <span class="param-title">工程备份与复原</span>
+              <span class="param-subtitle">暂存未完成项目或导入/导出备份文件</span>
+            </div>
+            <div class="project-actions-wrap" style="display: flex; gap: 8px; width: 100%; margin-top: 10px;">
+              <button class="btn-primary" id="btnSaveLocal" style="flex: 1; padding: 10px; font-size: 13px; border-radius: 8px; height: 38px; display: flex; align-items: center; justify-content: center; gap: 4px; background: var(--color-blue); border: none;" disabled>
+                💾 暂存浏览器
+              </button>
+              <button class="btn-primary" id="btnExportProject" style="flex: 1; padding: 10px; font-size: 13px; border-radius: 8px; height: 38px; display: flex; align-items: center; justify-content: center; gap: 4px; background: rgba(255,255,255,0.1); border: 1px solid rgba(0,0,0,0.15); color: #1e293b;" disabled>
+                📤 导出文件
+              </button>
+            </div>
+            <div class="project-import-wrap" style="margin-top: 8px; width: 100%;">
+              <button class="btn-primary" id="btnTriggerImport" style="width: 100%; padding: 10px; font-size: 13px; border-radius: 8px; height: 38px; display: flex; align-items: center; justify-content: center; gap: 4px; background: rgba(255,255,255,0.05); border: 1px dashed rgba(0,0,0,0.2); color: #475569;">
+                📥 导入工程文件 (.bead)
+              </button>
+              <input type="file" id="projectFileInput" accept=".bead,.json" style="display: none;">
+            </div>
+          </div>
+
+          <!-- 选项 3：浏览器最近草稿 -->
+          <div class="param-item" id="recentProjectsSection" style="border-top: 1px solid rgba(255,255,255,0.06); padding-top: 12px; margin-top: 12px; display: none;">
+            <div class="param-label-wrap">
+              <span class="param-title">浏览器最近草稿</span>
+              <span class="param-subtitle">继续您在浏览器中暂存的未完成项目</span>
+            </div>
+            <div class="recent-projects-list" id="recentProjectsList" style="margin-top: 8px; display: flex; flex-direction: column; gap: 6px; max-height: 160px; overflow-y: auto; padding-right: 4px;">
+              <!-- 动态载入最近暂存的项目 -->
             </div>
           </div>
         </div>
@@ -3551,6 +3600,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
     // 4. 绑定各交互板块事件
     initUploadEvents();
+    initProjectEvents(); // 初始化工程管理与空白画板事件
     initParameterEvents();
     initCanvasGestureEvents();
     initControlBtnEvents();
@@ -3609,6 +3659,304 @@ function initUploadEvents() {
       alert("⚠️ [拖拽读取图片时出错]\n" + err.message + "\n" + err.stack);
     }
   });
+}
+
+/**
+ * ==================== 3.6 新建空白画板与工程暂存系统 ====================
+ */
+function initProjectEvents() {
+  const btnBlank29 = document.getElementById('btnBlank29');
+  const btnBlank58 = document.getElementById('btnBlank58');
+  const btnBlank87 = document.getElementById('btnBlank87');
+  const btnSaveLocal = document.getElementById('btnSaveLocal');
+  const btnExportProject = document.getElementById('btnExportProject');
+  const btnTriggerImport = document.getElementById('btnTriggerImport');
+  const projectFileInput = document.getElementById('projectFileInput');
+
+  if (btnBlank29) btnBlank29.addEventListener('click', () => createBlankBoard(29));
+  if (btnBlank58) btnBlank58.addEventListener('click', () => createBlankBoard(58));
+  if (btnBlank87) btnBlank87.addEventListener('click', () => createBlankBoard(87));
+
+  if (btnSaveLocal) btnSaveLocal.addEventListener('click', saveProjectToBrowser);
+  if (btnExportProject) btnExportProject.addEventListener('click', exportProjectAsFile);
+  
+  if (btnTriggerImport && projectFileInput) {
+    btnTriggerImport.addEventListener('click', () => projectFileInput.click());
+    projectFileInput.addEventListener('change', importProjectFromFile);
+  }
+
+  // 初始化时载入一次浏览器的最近草稿
+  renderRecentProjectsList();
+}
+
+function createBlankBoard(size) {
+  // 1. 初始化空白的二维网格
+  const grid2D = [];
+  for (let y = 0; y < size; y++) {
+    const row = [];
+    for (let x = 0; x < size; x++) {
+      row.push(null);
+    }
+    grid2D.push(row);
+  }
+
+  // 2. 初始化全局 pixelResult 对象
+  pixelResult = {
+    grid: grid2D,
+    beadCounts: [],
+    width: size,
+    height: size,
+    totalBeads: 0,
+    isBlankBoard: true
+  };
+
+  // 3. 重置视口与手势
+  imageElement = null; // 无原图背景
+  offsetX = 0;
+  offsetY = 0;
+  scale = 1.0;
+
+  // 4. 更新左侧看板
+  elStatTotalBeads.textContent = 0;
+  elStatUniqueColors.textContent = 0;
+  elStatGridDimensions.textContent = `${size}x${size}`;
+
+  // 5. 切换 UI 状态 (显示主画板、清单，隐藏原图参数调校)
+  elParametersCard.style.display = 'none'; // 空白手绘板不需要原图调校
+  elStatsCard.style.display = 'block';
+  elPreviewPlaceholder.style.display = 'none';
+  elPreviewCard.style.display = 'block';
+  elBottomLayout.style.display = 'block';
+
+  // 启用工程保存与导出按钮
+  document.getElementById('btnSaveLocal').removeAttribute('disabled');
+  document.getElementById('btnExportProject').removeAttribute('disabled');
+
+  // 6. 重置画笔颜色为 H7 黑色，保底使用第一个色号
+  const defaultBead = window.ARTKAL_C_COLORS.find(c => c.code === 'H7') || window.ARTKAL_C_COLORS[0];
+  setActivePaintColor(defaultBead);
+
+  // 7. 重绘
+  drawPreview();
+  drawTracerChips();
+  drawMaterialTable();
+
+  console.log(`[Visio Studio] 成功创建空白画板: ${size}x${size}`);
+}
+
+function saveProjectToBrowser() {
+  if (!pixelResult) return;
+
+  // 1. 让用户输入项目名称
+  let projectName = prompt("请输入此拼豆工程的名称：", `拼豆项目_${new Date().toLocaleDateString().replace(/\//g, '')}`);
+  if (projectName === null) return; // 用户取消
+  projectName = projectName.trim() || `拼豆项目_${Date.now()}`;
+
+  // 2. 压缩网格为只包含色号代码的数组，极大缩减体积，避免 localstorage 满
+  const compressedGrid = pixelResult.grid.map(row => row.map(cell => cell ? cell.code : null));
+
+  // 3. 构建项目数据包
+  const projectData = {
+    id: 'visio_proj_' + Date.now(),
+    name: projectName,
+    saveTime: new Date().toLocaleString(),
+    width: pixelResult.width,
+    height: pixelResult.height,
+    grid: compressedGrid,
+    isBlankBoard: !!pixelResult.isBlankBoard
+  };
+
+  // 4. 获取现有列表并保存
+  try {
+    const rawList = localStorage.getItem('visio_bead_projects');
+    const projectList = rawList ? JSON.parse(rawList) : [];
+    
+    projectList.unshift(projectData);
+    
+    // 限制最多保存 10 个草稿
+    if (projectList.length > 10) {
+      projectList.pop();
+    }
+
+    localStorage.setItem('visio_bead_projects', JSON.stringify(projectList));
+    alert(`🎉 暂存成功！项目 "${projectName}" 已安全保存在您浏览器的本地缓存中。`);
+    
+    // 5. 刷新最近暂存列表展示
+    renderRecentProjectsList();
+  } catch (err) {
+    alert("⚠️ 保存失败，可能是浏览器 LocalStorage 空间已满: " + err.message);
+  }
+}
+
+function loadProjectFromData(projectData) {
+  try {
+    const size = projectData.width;
+    
+    // 1. 解压网格数据，还原完整 bead 对象
+    const decompressedGrid = projectData.grid.map(row => row.map(code => {
+      if (code === null) return null;
+      const bead = window.ARTKAL_C_COLORS.find(c => c.code === code);
+      return bead ? { ...bead, symbol: bead.code } : null;
+    }));
+
+    // 2. 写入全局变量
+    pixelResult = {
+      grid: decompressedGrid,
+      width: size,
+      height: size,
+      beadCounts: [], // 稍后重算
+      totalBeads: 0,
+      isBlankBoard: !!projectData.isBlankBoard
+    };
+
+    // 3. 重置视口与参数
+    imageElement = null; // 清空底层参考图
+    offsetX = 0;
+    offsetY = 0;
+    scale = 1.0;
+
+    // 4. 重新整理并统计所有的色号
+    recalculateStats();
+
+    // 5. 调整 UI 呈现
+    elStatGridDimensions.textContent = `${size}x${size}`;
+    elParametersCard.style.display = 'none'; // 锁定并隐藏参考图调校面板
+    elStatsCard.style.display = 'block';
+    elPreviewPlaceholder.style.display = 'none';
+    elPreviewCard.style.display = 'block';
+    elBottomLayout.style.display = 'block';
+
+    // 启用工程按钮
+    document.getElementById('btnSaveLocal').removeAttribute('disabled');
+    document.getElementById('btnExportProject').removeAttribute('disabled');
+
+    // 6. 重置画笔为当前已有的某种颜色，或者保底 H7 黑色
+    const defaultBead = window.ARTKAL_C_COLORS.find(c => c.code === 'H7') || window.ARTKAL_C_COLORS[0];
+    setActivePaintColor(defaultBead);
+
+    console.log(`[Visio Studio] 成功载入拼豆工程: ${projectData.name}`);
+  } catch (err) {
+    alert("⚠️ 载入工程失败，文件损坏或结构已更改: " + err.message);
+  }
+}
+
+function renderRecentProjectsList() {
+  const listContainer = document.getElementById('recentProjectsList');
+  const section = document.getElementById('recentProjectsSection');
+  if (!listContainer || !section) return;
+
+  const rawList = localStorage.getItem('visio_bead_projects');
+  const projectList = rawList ? JSON.parse(rawList) : [];
+
+  if (projectList.length === 0) {
+    section.style.display = 'none';
+    return;
+  }
+
+  section.style.display = 'block';
+  listContainer.innerHTML = '';
+
+  projectList.forEach((proj, idx) => {
+    const item = document.createElement('div');
+    item.style.cssText = `
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 12px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(0, 0, 0, 0.08);
+      border-radius: 8px;
+      font-size: 12px;
+      transition: all 0.2s;
+    `;
+
+    item.innerHTML = `
+      <div class="proj-info" style="cursor: pointer; flex: 1; min-width: 0; text-align: left;">
+        <div style="font-weight: bold; color: #1e293b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${proj.name}</div>
+        <div style="font-size: 10px; color: #64748b; margin-top: 2px;">尺寸: ${proj.width}x${proj.width} | 时间: ${proj.saveTime}</div>
+      </div>
+      <button class="delete-btn" style="background: none; border: none; color: #ef4444; font-size: 14px; cursor: pointer; padding: 0 4px; margin-left: 8px;">✕</button>
+    `;
+
+    // 点击载入项目
+    item.querySelector('.proj-info').addEventListener('click', () => {
+      if (confirm(`确定载入 "${proj.name}" 吗？这将会覆盖您当前的拼豆画板进度！`)) {
+        loadProjectFromData(proj);
+      }
+    });
+
+    // 点击删除项目
+    item.querySelector('.delete-btn').addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (confirm(`确定删除 "${proj.name}" 的暂存吗？`)) {
+        projectList.splice(idx, 1);
+        localStorage.setItem('visio_bead_projects', JSON.stringify(projectList));
+        renderRecentProjectsList();
+      }
+    });
+
+    // 悬停反馈
+    item.addEventListener('mouseenter', () => {
+      item.style.background = 'rgba(255, 255, 255, 0.1)';
+      item.style.borderColor = 'rgba(0, 0, 0, 0.15)';
+    });
+    item.addEventListener('mouseleave', () => {
+      item.style.background = 'rgba(255, 255, 255, 0.05)';
+      item.style.borderColor = 'rgba(0, 0, 0, 0.08)';
+    });
+
+    listContainer.appendChild(item);
+  });
+}
+
+function exportProjectAsFile() {
+  if (!pixelResult) return;
+
+  // 压缩网格
+  const compressedGrid = pixelResult.grid.map(row => row.map(cell => cell ? cell.code : null));
+
+  const projectData = {
+    version: "1.0",
+    generator: "Visio Studio Bead Painter",
+    exportTime: new Date().toISOString(),
+    width: pixelResult.width,
+    height: pixelResult.height,
+    grid: compressedGrid,
+    isBlankBoard: !!pixelResult.isBlankBoard
+  };
+
+  const jsonStr = JSON.stringify(projectData, null, 2);
+  const blob = new Blob([jsonStr], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  
+  const link = document.createElement('a');
+  link.download = `Visio_Bead_Project_${pixelResult.width}x${pixelResult.width}_${Date.now()}.bead`;
+  link.href = url;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
+function importProjectFromFile(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(evt) {
+    try {
+      const projectData = JSON.parse(evt.target.result);
+      if (!projectData.width || !projectData.grid) {
+        throw new Error("工程文件缺少核心数据 (width 或 grid)！");
+      }
+      loadProjectFromData(projectData);
+      alert(`🎉 成功导入拼豆工程！已还原为 ${projectData.width}x${projectData.width} 的画板网格。`);
+    } catch (err) {
+      alert("⚠️ 导入失败，读取工程文件出错: " + err.message);
+    }
+  };
+  reader.readAsText(file);
+  
+  // 重置文件 input 的值，允许重复导入相同文件
+  e.target.value = '';
 }
 
 /**
@@ -4071,6 +4419,12 @@ function handleImageFile(file) {
 
             resetViewport();
             reCalculatePixelation();
+
+            // 启用工程保存与导出按钮
+            const btnSaveLocal = document.getElementById('btnSaveLocal');
+            const btnExportProject = document.getElementById('btnExportProject');
+            if (btnSaveLocal) btnSaveLocal.removeAttribute('disabled');
+            if (btnExportProject) btnExportProject.removeAttribute('disabled');
           } catch (err2) {
             alert("⚠️ [图像处理链异常]\n在重绘与计算像素网格时出错: " + err2.message + "\n" + err2.stack);
           }
