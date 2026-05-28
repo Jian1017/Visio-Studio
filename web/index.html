@@ -3385,11 +3385,8 @@ function processPixelData(canvas, ctx, sourceWidth, sourceHeight, targetSize, ma
   const beadCounts = Object.values(beadHistogram)
     .sort((a, b) => b.count - a.count)
     .map((item, index) => {
-      // 顺便给每种颜色指定一个临摹专用的单字符符号 (比如 A, B, C... 数字 1, 2, 3... 符号 ★, ✦...)
-      let symbol = String.fromCharCode(65 + (index % 26)); // A-Z 循环
-      if (index >= 26) {
-        symbol = String.fromCharCode(48 + (index - 26) % 10); // 0-9 循环
-      }
+      // 直接使用 Artkal 色号作为代号，方便对照实物豆子包装标签
+      let symbol = item.bead.code;
       return {
         ...item.bead,
         count: item.count,
@@ -5036,10 +5033,7 @@ function recalculateStats() {
   const beadCounts = Object.values(beadHistogram)
     .sort((a, b) => b.count - a.count)
     .map((item, index) => {
-      let symbol = String.fromCharCode(65 + (index % 26)); // A-Z 循环
-      if (index >= 26) {
-        symbol = String.fromCharCode(48 + (index - 26) % 10); // 0-9 循环
-      }
+      let symbol = item.bead.code; // 直接使用 Artkal 色号
       return {
         ...item.bead,
         count: item.count,
