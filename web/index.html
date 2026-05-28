@@ -4022,7 +4022,7 @@ function scanBeadChartImage(file, gridSize) {
         const beadHistogram = {};
 
         const cellW = w / gridSize;
-        const cellH = h / gridSize;
+        const cellH = w / gridSize; // 图纸主体网格部分永远是一个完美的正方形，位于图片的最顶端，高度等于宽度 w
 
         // 避错多数派投票机制：4点避噪采样
         // 避开正中心可能存在的字符标识 (如字母/色号) 以及最边缘的网格粗线
