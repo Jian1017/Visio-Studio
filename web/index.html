@@ -4183,18 +4183,10 @@ function getOriginalImageBase64() {
   }
 }
 
-// 统一调用 Google Gemini 3.5 / 1.5 接口核心 (全前端原生交互)
+// 统一调用 Google Gemini 3.5 / 1.5 接口核心 (支持本地 Direct 调用与 Vercel Serverless 后端云代理双轨切换)
 async function callGeminiAPI(prompt, imageBase64 = null) {
   const modelSelect = document.getElementById('aiModelSelect');
   const modelId = modelSelect ? modelSelect.value : 'gemini-3.5-flash';
-  
-  if (!decryptedAiApiKey) {
-    throw new Error("⚠️ 请在 index.html 源码第 3659 行附近的 `decryptedAiApiKey` 变量中直接配置您的 Google API Key！");
-  }
-
-  // 拼接稳定版 API Request Endpoint，支持镜像代理
-  const baseUrl = (typeof geminiApiEndpoint !== 'undefined' && geminiApiEndpoint) ? geminiApiEndpoint : 'https://generativelanguage.googleapis.com';
-  const url = `${baseUrl}/v1beta/models/${modelId}:generateContent?key=${decryptedAiApiKey}`;
 
   // 构建 Gemini 标准多模态 Parts 数据结构
   const parts = [];
@@ -4221,7 +4213,7 @@ async function callGeminiAPI(prompt, imageBase64 = null) {
       }
     ],
     generationConfig: {
-      // 强力启用 Google JSON schema 强制约束，使 Gemini 输出绝对可解析 of 纯 JSON，彻底杜绝 Markdown 碎字
+      // 强力启用 Google JSON schema 强制约束，使 Gemini 输出绝对可解析 of 纯 JSON
       responseMimeType: "application/json"
     }
   };
@@ -4230,20 +4222,49 @@ async function callGeminiAPI(prompt, imageBase64 = null) {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 25000);
 
+  // 智能双轨制切换逻辑：
+  // 1. 判断是否是本地环境并且配置了有效的本地开发 Key (以 AIzaSy 开头)
+  const isLocalEnv = location.protocol === 'file:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+  const hasValidLocalKey = decryptedAiApiKey && decryptedAiApiKey.startsWith('AIzaSy');
+
+  let response;
   try {
-    const response = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(payload),
-      signal: controller.signal
-    });
+    if (isLocalEnv && hasValidLocalKey) {
+      // 本地直连开发模式：使用本地 Key 并支持镜像代理直连 Google
+      console.log("[Visio Studio AI] 检测到本地开发环境且配置了有效 Key，启用前端直连通道...");
+      const baseUrl = (typeof geminiApiEndpoint !== 'undefined' && geminiApiEndpoint) ? geminiApiEndpoint : 'https://generativelanguage.googleapis.com';
+      const directUrl = `${baseUrl}/v1beta/models/${modelId}:generateContent?key=${decryptedAiApiKey}`;
+      
+      response = await fetch(directUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload),
+        signal: controller.signal
+      });
+    } else {
+      // 线上生产部署模式：通过本站托管的 Vercel Serverless 后端安全中转接口调用，绝对防止密钥泄露！
+      console.log("[Visio Studio AI] 启用 Vercel 后端安全中转接口，隐藏密钥并全力加速服务...");
+      const backendUrl = '/api/gemini';
+      
+      response = await fetch(backendUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          modelId: modelId,
+          payload: payload
+        }),
+        signal: controller.signal
+      });
+    }
     clearTimeout(timeoutId);
 
     if (!response.ok) {
       const errData = await response.json().catch(() => ({}));
-      const errMsg = errData.error ? errData.error.message : response.statusText;
+      const errMsg = errData.error ? (typeof errData.error === 'string' ? errData.error : (errData.error.message || JSON.stringify(errData.error))) : response.statusText;
       throw new Error(`Google API 响应异常: ${errMsg}`);
     }
 
@@ -4253,7 +4274,7 @@ async function callGeminiAPI(prompt, imageBase64 = null) {
   } catch (err) {
     clearTimeout(timeoutId);
     if (err.name === 'AbortError') {
-      throw new Error("网络连接超时！请确保您的科学上网工具已开启“全局代理”模式，或者在 index.html 源码的 `geminiApiEndpoint` 变量中配置了可用的 Gemini 镜像代理地址（如 'https://api.openai-sb.com' 等）。");
+      throw new Error("网络连接超时！请确保您的科学上网工具已开启“全局代理”模式，或者在 index.html 源码的 `geminiApiEndpoint` 变量中配置了可用的 Gemini 镜像代理地址。如果已部署线上，请确保在 Vercel 后端 Settings -> Environment Variables 中配置了正确的 `GEMINI_API_KEY` 环境变量。");
     }
     throw err;
   }
