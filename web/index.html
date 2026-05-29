@@ -4217,9 +4217,9 @@ async function callGeminiAPI(prompt, imageBase64 = null) {
     }
   };
 
-  // 引入 AbortController 防止国内环境连接 Google 发生网络被阻断而永久挂起 (25秒超时)
+  // 引入 AbortController 防止网络延迟导致连接永久挂起 (60秒超时，保证 AI 完整输出大规模像素网格)
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 25000);
+  const timeoutId = setTimeout(() => controller.abort(), 60000);
 
   // 智能双轨制切换逻辑：
   // 1. 判断是否是本地环境并且配置了有效的本地开发 Key (以 AIzaSy 开头)
@@ -4281,7 +4281,7 @@ async function callGeminiAPI(prompt, imageBase64 = null) {
   } catch (err) {
     clearTimeout(timeoutId);
     if (err.name === 'AbortError') {
-      throw new Error("网络连接超时！请确保您的科学上网工具已开启“全局代理”模式，或者在 index.html 源码的 `geminiApiEndpoint` 变量中配置了可用的 Gemini 镜像代理地址。如果已部署线上，请确保在 Vercel 后端 Settings -> Environment Variables 中配置了正确的 `GEMINI_API_KEY` 环境变量。");
+      throw new Error("网络连接超时（60秒已满）！AI 绘图或大网格精修生成大规模 JSON 阵列耗时较长，请确保您的科学上网工具已开启“全局代理”模式且节点通畅。如果是线上部署，请确保 Vercel 后端配置的 `GEMINI_API_KEY` 有效且未超频。");
     }
     throw err;
   }
