@@ -328,6 +328,11 @@
               <h3 class="card-section-title">🎯 拟真拼豆预览舱</h3>
               <p class="preview-tips">支持鼠标拖拽平移、滚轮无级缩放（手机端可双指捏合）</p>
             </div>
+            <!-- 豆子效果切换 (圆形拼豆/熨烫方豆) -->
+            <div class="segment-control display-mode-segment" id="beadShapeSelector" style="height: 32px; font-size: 11px; margin-left: auto; margin-right: 8px; align-items: center; width: auto !important;">
+              <div class="segment-item active" data-value="round" style="padding: 0 8px; height: 26px; line-height: 26px; border-radius: 9px; cursor: pointer; font-weight: 700; user-select: none;">🟡 圆形</div>
+              <div class="segment-item" data-value="square" style="padding: 0 8px; height: 26px; line-height: 26px; border-radius: 9px; cursor: pointer; font-weight: 700; user-select: none;">🟧 熨烫</div>
+            </div>
             <!-- 视口重置按钮 -->
             <button class="btn-icon" id="btnResetViewport" title="重置视口居中">⟲ 复位</button>
           </div>
@@ -3605,6 +3610,9 @@ let btnZoomIn = null;
 let btnZoomOut = null;
 let btnExportImage = null;
 
+// 熨烫或圆形拼豆效果：'round' or 'square'
+let currentBeadShape = 'round';
+
 // 隐藏画布
 let elPixelCanvas = null;
 let elExportCanvas = null;
@@ -4598,6 +4606,32 @@ function initControlBtnEvents() {
   
   // 导出 PNG
   btnExportImage.addEventListener('click', exportHighResPattern);
+
+  // 熨烫/圆形拼豆效果切换
+  const shapeItems = document.querySelectorAll('#beadShapeSelector .segment-item');
+  shapeItems.forEach(item => {
+    item.addEventListener('click', (e) => {
+      shapeItems.forEach(i => i.classList.remove('active'));
+      e.currentTarget.classList.add('active');
+      
+      currentBeadShape = e.currentTarget.dataset.value;
+      localStorage.setItem('visio_studio_bead_shape', currentBeadShape);
+      drawPreview();
+    });
+  });
+
+  // 读取已保存的拼豆效果模式
+  const cachedShape = localStorage.getItem('visio_studio_bead_shape');
+  if (cachedShape) {
+    currentBeadShape = cachedShape;
+    shapeItems.forEach(i => {
+      if (i.dataset.value === currentBeadShape) {
+        i.classList.add('active');
+      } else {
+        i.classList.remove('active');
+      }
+    });
+  }
 }
 
 /**
@@ -5291,14 +5325,25 @@ function drawPreview() {
             // 临摹单色高亮模式下：目标色高亮
             ctx.globalAlpha = 1.0;
             ctx.beginPath();
-            ctx.arc(cx, cy, radius, 0, 2 * Math.PI);
+            if (currentBeadShape === 'square') {
+              const pad = 0.5;
+              ctx.rect(x * cellSize + pad, y * cellSize + pad, cellSize - 2 * pad, cellSize - 2 * pad);
+            } else {
+              ctx.arc(cx, cy, radius, 0, 2 * Math.PI);
+            }
             ctx.fillStyle = cell.hex;
             ctx.fill();
 
             // 绘制仿真高光圈
             ctx.beginPath();
-            ctx.arc(cx, cy, radius - 0.5, 0, 2 * Math.PI);
-            ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+            if (currentBeadShape === 'square') {
+              const pad = 1.0;
+              ctx.rect(x * cellSize + pad, y * cellSize + pad, cellSize - 2 * pad, cellSize - 2 * pad);
+              ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+            } else {
+              ctx.arc(cx, cy, radius - 0.5, 0, 2 * Math.PI);
+              ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+            }
             ctx.lineWidth = 1;
             ctx.stroke();
 
@@ -5308,13 +5353,14 @@ function drawPreview() {
             const b = cell.rgb ? cell.rgb[2] : 255;
             const isLight = (0.299 * r + 0.587 * g + 0.114 * b) > 135;
 
-            // 绘制仿真中心熔融小孔 (浅色豆子使用白色孔，深色豆子使用黑色孔)
+            // 绘制仿真中心熔融小孔
             ctx.beginPath();
-            ctx.arc(cx, cy, radius / 3, 0, 2 * Math.PI);
+            const holeRad = currentBeadShape === 'square' ? radius / 6 : radius / 3;
+            ctx.arc(cx, cy, holeRad, 0, 2 * Math.PI);
             ctx.fillStyle = isLight ? '#FFFFFF' : '#050608';
             ctx.fill();
 
-            // 强制渲染清晰的高Legibility临摹符号 (浅色豆用黑字、深色豆用白字)
+            // 强制渲染清晰的高Legibility临摹符号
             ctx.fillStyle = isLight ? '#111111' : '#FFFFFF';
             ctx.font = `bold ${Math.max(10, cellSize * 0.55)}px monospace`;
             ctx.textAlign = 'center';
@@ -5327,22 +5373,38 @@ function drawPreview() {
             // 其它非目标色变为 faint 虚影
             ctx.globalAlpha = 0.08;
             ctx.beginPath();
-            ctx.arc(cx, cy, radius, 0, 2 * Math.PI);
+            if (currentBeadShape === 'square') {
+              const pad = 0.5;
+              ctx.rect(x * cellSize + pad, y * cellSize + pad, cellSize - 2 * pad, cellSize - 2 * pad);
+            } else {
+              ctx.arc(cx, cy, radius, 0, 2 * Math.PI);
+            }
             ctx.fillStyle = cell.hex;
             ctx.fill();
           }
         } else {
-          // 常规色彩模式：画出美丽的 3D 彩色塑胶拼豆
+          // 常规色彩模式：画出美丽的 3D 彩色塑胶拼豆/熨烫方豆
           ctx.globalAlpha = 1.0;
           ctx.beginPath();
-          ctx.arc(cx, cy, radius, 0, 2 * Math.PI);
+          if (currentBeadShape === 'square') {
+            const pad = 0.5;
+            ctx.rect(x * cellSize + pad, y * cellSize + pad, cellSize - 2 * pad, cellSize - 2 * pad);
+          } else {
+            ctx.arc(cx, cy, radius, 0, 2 * Math.PI);
+          }
           ctx.fillStyle = cell.hex;
           ctx.fill();
 
-          // 仿真高光微圈
+          // 仿真高光微圈/微框
           ctx.beginPath();
-          ctx.arc(cx, cy, radius - 0.5, 0, 2 * Math.PI);
-          ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+          if (currentBeadShape === 'square') {
+            const pad = 1.0;
+            ctx.rect(x * cellSize + pad, y * cellSize + pad, cellSize - 2 * pad, cellSize - 2 * pad);
+            ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+          } else {
+            ctx.arc(cx, cy, radius - 0.5, 0, 2 * Math.PI);
+            ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+          }
           ctx.lineWidth = 1;
           ctx.stroke();
 
@@ -5354,7 +5416,8 @@ function drawPreview() {
 
           // 熔融小孔
           ctx.beginPath();
-          ctx.arc(cx, cy, radius / 3.5, 0, 2 * Math.PI);
+          const holeRad = currentBeadShape === 'square' ? radius / 6 : radius / 3.5;
+          ctx.arc(cx, cy, holeRad, 0, 2 * Math.PI);
           ctx.fillStyle = isLight ? '#FFFFFF' : '#050608';
           ctx.fill();
 
@@ -5602,13 +5665,19 @@ function exportHighResPattern() {
       if (cell) {
         // 1. 绘制拼豆彩色圆身
         ctx.beginPath();
-        ctx.arc(cx, cy, radius, 0, 2 * Math.PI);
+        if (currentBeadShape === 'square') {
+          const pad = 0.5;
+          ctx.rect(x * baseCellSize + pad, y * baseCellSize + pad, baseCellSize - 2 * pad, baseCellSize - 2 * pad);
+        } else {
+          ctx.arc(cx, cy, radius, 0, 2 * Math.PI);
+        }
         ctx.fillStyle = cell.hex;
         ctx.fill();
 
         // 2. 绘制白色内衬孔洞
         ctx.beginPath();
-        ctx.arc(cx, cy, radius / 3.5, 0, 2 * Math.PI);
+        const holeRad = currentBeadShape === 'square' ? radius / 6 : radius / 3.5;
+        ctx.arc(cx, cy, holeRad, 0, 2 * Math.PI);
         ctx.fillStyle = '#FFFFFF';
         ctx.fill();
 
