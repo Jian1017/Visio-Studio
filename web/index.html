@@ -4169,13 +4169,33 @@ function loadPresetTemplate(type) {
 function getOriginalImageBase64() {
   if (!imageElement) return null;
   try {
+    const originalWidth = imageElement.naturalWidth || imageElement.width;
+    const originalHeight = imageElement.naturalHeight || imageElement.height;
+    
+    // 强制缩放到最大 768px 边界，保证生成高质量像素参考的同时，体积从数 MB 暴降到 30KB
+    const maxBound = 768;
+    let targetWidth = originalWidth;
+    let targetHeight = originalHeight;
+    
+    if (originalWidth > maxBound || originalHeight > maxBound) {
+      if (originalWidth > originalHeight) {
+        targetWidth = maxBound;
+        targetHeight = Math.round((originalHeight * maxBound) / originalWidth);
+      } else {
+        targetHeight = maxBound;
+        targetWidth = Math.round((originalWidth * maxBound) / originalHeight);
+      }
+    }
+    
     const tempCanvas = document.createElement('canvas');
-    tempCanvas.width = imageElement.naturalWidth || imageElement.width;
-    tempCanvas.height = imageElement.naturalHeight || imageElement.height;
+    tempCanvas.width = targetWidth;
+    tempCanvas.height = targetHeight;
+    
     const tCtx = tempCanvas.getContext('2d');
-    tCtx.drawImage(imageElement, 0, 0);
-    // 输出压缩率 0.82 的 JPEG，保证多模态图像细节同时体积小巧
-    return tempCanvas.toDataURL('image/jpeg', 0.82).split(',')[1];
+    tCtx.drawImage(imageElement, 0, 0, targetWidth, targetHeight);
+    
+    // 输出压缩率 0.8 的 JPEG，双重瘦身
+    return tempCanvas.toDataURL('image/jpeg', 0.8).split(',')[1];
   } catch (e) {
     console.error("提取图片Base64失败:", e);
     return null;
