@@ -4362,8 +4362,15 @@ Example structure:
       throw new Error("AI 返回的格式异常，请重试！");
     }
 
-    if (flatArray.length !== size * size) {
-      throw new Error(`AI 返回的像素数据大小为 ${flatArray.length}，不符合 ${size}x${size} = ${size * size}，请重试！`);
+    // 弹性自愈容错机制：大尺寸下 AI 偶尔会发生 0.1% 的计数偏差（如 3364 个点漏掉 4 个），自动补齐或截断，避免抛错！
+    if (flatArray.length < size * size) {
+      console.warn(`[AI 容错补齐] AI 返回元素数量为 ${flatArray.length}，少于期望的 ${size * size}，自动填充 'null' 补齐。`);
+      while (flatArray.length < size * size) {
+        flatArray.push('null');
+      }
+    } else if (flatArray.length > size * size) {
+      console.warn(`[AI 容错截断] AI 返回元素数量为 ${flatArray.length}，多于期望的 ${size * size}，自动截断。`);
+      flatArray = flatArray.slice(0, size * size);
     }
 
     // 翻译为拼豆单元二维网格
@@ -4514,8 +4521,15 @@ Example structure:
       throw new Error("AI 返回的格式异常，请重试！");
     }
 
-    if (flatArray.length !== size * size) {
-      throw new Error("AI 返回的精修网格像素数据大小为 " + flatArray.length + "，不符合 " + size + "x" + size + " = " + (size * size) + "，请重试！");
+    // 弹性自愈容错机制：大尺寸下 AI 偶尔会发生 0.1% 的计数偏差（如 3364 个点漏掉 4 个），自动补齐或截断，避免抛错！
+    if (flatArray.length < size * size) {
+      console.warn(`[AI 容错补齐] AI 返回元素数量为 ${flatArray.length}，少于期望的 ${size * size}，自动填充 'null' 补齐。`);
+      while (flatArray.length < size * size) {
+        flatArray.push('null');
+      }
+    } else if (flatArray.length > size * size) {
+      console.warn(`[AI 容错截断] AI 返回元素数量为 ${flatArray.length}，多于期望的 ${size * size}，自动截断。`);
+      flatArray = flatArray.slice(0, size * size);
     }
 
     // 3. 将精修后的结果写回 2D 网格
