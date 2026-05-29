@@ -4313,6 +4313,13 @@ async function runAiPaint() {
   const btnAiPaint = document.getElementById('btnAiPaint');
   
   if (!promptInput || !btnAiPaint) return;
+
+  const size = currentGridSize || 29;
+  if (size > 58) {
+    alert("⚠️ AI 自动绘画限制提示\n\n由于 87x87 / 104x104 属于超大型拼豆规格（单图纸包含高达 " + (size * size) + " 颗拼豆），这已超出了 Google Gemini 与云端代理中转服务器的单次 Token 连续生成极限（会导致不可避免的连接超时或数据丢失）。\n\n💡 推荐方案：\n1. 请先切换至【单板 (29x29)】或【四联板 (58x58)】规格下使用 AI 创意绘图，生成效果最佳且极其稳定；\n2. AI 生成完毕后，您可以通过导出 .bead 工程文件备份本地，或在画布上进行二次创作。\n\n* 本地浏览器的“常规图片扫描识别”（K-Means 像素化）完全不受任何尺寸限制，支持 104x104 等超大拼豆图纸的秒级无损扫描还原！");
+    return;
+  }
+
   const userPrompt = promptInput.value.trim();
   
   if (!userPrompt) {
@@ -4454,6 +4461,12 @@ Example structure:
 async function runAiRefine() {
   const btnAiRefine = document.getElementById('btnAiRefine');
   if (!btnAiRefine || !pixelResult || !imageElement) return;
+
+  const size = currentGridSize || 29;
+  if (size > 58) {
+    alert("⚠️ AI 智能精修限制提示\n\n由于 87x87 / 104x104 属于超大型拼豆规格（单图纸包含高达 " + (size * size) + " 颗拼豆），这已超出了 Google Gemini 与云端代理中转服务器的多模态 Token 连续推理极限（会引起连接超时或数据丢失）。\n\n💡 推荐方案：\n1. 推荐在【单板 (29x29)】或【四联板 (58x58)】规格下使用“一键精修”功能，在此规格下生成效果最佳且极其稳定；\n2. 自动生成完毕后，您可以通过导出 .bead 工程文件备份本地，并在新建 104x104 等超大画布时载入使用。\n\n* 本地浏览器的“常规图片扫描识别”（K-Means 像素化）完全不受任何尺寸限制，支持 104x104 等超大拼豆图纸的秒级无损扫描还原！");
+    return;
+  }
 
   try {
     btnAiRefine.disabled = true;
