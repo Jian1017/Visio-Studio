@@ -13,6 +13,25 @@ module.exports = async function handler(req, res) {
     return res.status(200).end();
   }
 
+  // 调试辅助接口：允许 GET 请求带 debug=models 时，列出该 API 密钥授权的所有可用模型
+  if (req.method === 'GET') {
+    const { url } = req;
+    if (url && url.includes('debug=models')) {
+      try {
+        const apiKey = process.env.GEMINI_API_KEY;
+        if (!apiKey) {
+          return res.status(500).json({ error: 'GEMINI_API_KEY 环境变量未配置！' });
+        }
+        const googleUrl = `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`;
+        const response = await fetch(googleUrl);
+        const resData = await response.json();
+        return res.status(response.status).json(resData);
+      } catch (err) {
+        return res.status(500).json({ error: '获取模型列表异常: ' + err.message });
+      }
+    }
+  }
+
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed. Please use POST.' });
   }
