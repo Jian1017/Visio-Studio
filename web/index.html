@@ -333,6 +333,11 @@
               <div class="segment-item active" data-value="round" style="padding: 0 8px; height: 26px; line-height: 26px; border-radius: 9px; cursor: pointer; font-weight: 700; user-select: none;">🟡 圆形</div>
               <div class="segment-item" data-value="square" style="padding: 0 8px; height: 26px; line-height: 26px; border-radius: 9px; cursor: pointer; font-weight: 700; user-select: none;">🟧 熨烫</div>
             </div>
+            <!-- 符号效果切换 (显示/隐藏符号) -->
+            <div class="segment-control display-mode-segment" id="beadSymbolSelector" style="height: 32px; font-size: 11px; margin-right: 8px; align-items: center; width: auto !important;">
+              <div class="segment-item active" data-value="hide" style="padding: 0 8px; height: 26px; line-height: 26px; border-radius: 9px; cursor: pointer; font-weight: 700; user-select: none;">🔇 隐藏代号</div>
+              <div class="segment-item" data-value="show" style="padding: 0 8px; height: 26px; line-height: 26px; border-radius: 9px; cursor: pointer; font-weight: 700; user-select: none;">🔊 显示代号</div>
+            </div>
             <!-- 视口重置按钮 -->
             <button class="btn-icon" id="btnResetViewport" title="重置视口居中">⟲ 复位</button>
           </div>
@@ -3612,6 +3617,8 @@ let btnExportImage = null;
 
 // 熨烫或圆形拼豆效果：'round' or 'square'
 let currentBeadShape = 'round';
+// 符号显示或隐藏效果：'hide' or 'show'
+let currentSymbolDisplay = 'hide';
 
 // 隐藏画布
 let elPixelCanvas = null;
@@ -4632,6 +4639,32 @@ function initControlBtnEvents() {
       }
     });
   }
+
+  // 符号效果切换 (显示/隐藏符号)
+  const symbolItems = document.querySelectorAll('#beadSymbolSelector .segment-item');
+  symbolItems.forEach(item => {
+    item.addEventListener('click', (e) => {
+      symbolItems.forEach(i => i.classList.remove('active'));
+      e.currentTarget.classList.add('active');
+      
+      currentSymbolDisplay = e.currentTarget.dataset.value;
+      localStorage.setItem('visio_studio_symbol_display', currentSymbolDisplay);
+      drawPreview();
+    });
+  });
+
+  // 读取已保存的符号显示模式
+  const cachedSymbolDisplay = localStorage.getItem('visio_studio_symbol_display');
+  if (cachedSymbolDisplay) {
+    currentSymbolDisplay = cachedSymbolDisplay;
+    symbolItems.forEach(i => {
+      if (i.dataset.value === currentSymbolDisplay) {
+        i.classList.add('active');
+      } else {
+        i.classList.remove('active');
+      }
+    });
+  }
 }
 
 /**
@@ -5421,8 +5454,8 @@ function drawPreview() {
           ctx.fillStyle = isLight ? '#FFFFFF' : '#050608';
           ctx.fill();
 
-          // 在放大倍率足够高时，绘制清晰对比的符号便于观看
-          if (scale >= 1.5) {
+          // 在放大倍率足够高且开启了“显示代号”时，绘制清晰对比的符号便于观看
+          if (scale >= 1.5 && currentSymbolDisplay === 'show') {
             ctx.fillStyle = isLight ? 'rgba(0,0,0,0.7)' : 'rgba(255,255,255,0.75)';
             ctx.font = `${cellSize * 0.45}px monospace`;
             ctx.textAlign = 'center';
