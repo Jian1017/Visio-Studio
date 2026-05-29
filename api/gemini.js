@@ -1,7 +1,8 @@
 // Vercel Serverless Function: Secure Google Gemini API Proxy
 // This hides the API Key from public commits and clients, preventing key theft and automatic revocation.
 
-export default async function handler(req, res) {
+// 使用 CommonJS 导出以确保在未配置 "type": "module" 的 Vercel Node.js 环境下完美兼容运行
+module.exports = async function handler(req, res) {
   // 1. 允许跨域请求 (CORS Headers)
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -17,7 +18,25 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { modelId, payload } = req.body;
+    // 兼容可能未被自动解析为 JSON 的 Body 字符串/Stream 或 Buffer
+    let body = req.body;
+    if (typeof body === 'string') {
+      try {
+        body = JSON.parse(body);
+      } catch (e) {
+        body = {};
+      }
+    } else if (Buffer.isBuffer(body)) {
+      try {
+        body = JSON.parse(body.toString('utf-8'));
+      } catch (e) {
+        body = {};
+      }
+    } else if (!body) {
+      body = {};
+    }
+    
+    const { modelId, payload } = body;
     
     // 2. 从 Vercel 后端环境变量读取安全配置的 API Key
     const apiKey = process.env.GEMINI_API_KEY;
