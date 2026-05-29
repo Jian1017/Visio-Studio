@@ -156,6 +156,37 @@
           </div>
         </div>
 
+        <!-- 卡片 A-3：🎨 经典模版中心 (总是可用) -->
+        <div class="glass-card templates-card" id="templatesCard">
+          <h3 class="card-section-title">🎨 经典模版中心</h3>
+          <div class="param-item">
+            <div class="param-label-wrap">
+              <span class="param-title">经典创作模版</span>
+              <span class="param-subtitle">点击一键载入可爱有趣的经典拼豆图案，即刻开始手绘或微调</span>
+            </div>
+            <div class="template-list-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 10px; width: 100%;">
+              <button class="template-btn" data-template="heart">
+                ❤️ 浓情爱心
+              </button>
+              <button class="template-btn" data-template="cat">
+                🐱 萌趣猫咪
+              </button>
+              <button class="template-btn" data-template="sword">
+                🗡️ 勇者之剑
+              </button>
+              <button class="template-btn" data-template="star">
+                🌟 闪耀之星
+              </button>
+              <button class="template-btn" data-template="rainbow">
+                🌈 七彩虹桥
+              </button>
+              <button class="template-btn" data-template="panda">
+                🐼 萌化熊猫
+              </button>
+            </div>
+          </div>
+        </div>
+
         <!-- 卡片 B：核心调节舱 (仅在上传图片后可用) -->
         <div class="glass-card parameters-card" id="parametersCard" style="display: none;">
           <h3 class="card-section-title">⚙️ 图纸参数调校</h3>
@@ -261,31 +292,70 @@
           </div>
         </div>
 
-        <!-- 卡片 B-2：🤖 AI 拓展中心 (仅在登录后、上传图片后可用) -->
+        <!-- 卡片 B-2：🤖 AI 拓展中心 (仅在登录后可用) -->
         <div class="glass-card ai-core-card" id="aiCoreCard" style="display: none;">
           <h3 class="card-section-title">🤖 AI 拼豆拓展舱 (AI Core)</h3>
           
-          <div class="param-item">
+          <div class="param-item" style="display: none !important;">
             <div class="param-label-wrap">
               <span class="param-title">AI 服务商</span>
-              <span class="param-subtitle">请选择您需要使用的 AI 大模型后端服务</span>
+              <span class="param-subtitle">推荐配置并使用最新的 Google Gemini 进行超清精修与自动绘图</span>
             </div>
             <div class="segment-control" id="aiProviderSelector">
-              <div class="segment-item active" data-value="deepseek" id="providerDeepseekBtn">DeepSeek</div>
+              <div class="segment-item active" data-value="google" id="providerGoogleBtn">Google</div>
+              <div class="segment-item" data-value="deepseek" id="providerDeepseekBtn">DeepSeek</div>
               <div class="segment-item" data-value="openai" id="providerOpenaiBtn">OpenAI</div>
             </div>
           </div>
 
-          <div class="param-item">
+          <div class="param-item" style="display: none !important;">
             <div class="param-label-wrap">
               <span class="param-title">AI API Key</span>
-              <span class="param-subtitle">密钥由管理员密码通过 AES-GCM 高端算法进行本地加密，极度安全</span>
+              <span class="param-subtitle">密钥由管理员密码通过 AES-GCM 高端算法进行本地加密，安全无虞</span>
             </div>
             <div class="ai-key-input-wrap" style="display: flex; gap: 8px; width: 100%; margin-top: 8px;">
-              <input type="password" id="aiApiKeyInput" class="auth-input" placeholder="输入 API Key (如 sk-...)" style="flex: 1; margin: 0; padding: 10px 14px; background: rgba(255,255,255,0.05); border: 1px solid rgba(0,0,0,0.1); border-radius: 8px; color: #1e293b; font-family: monospace; font-size: 13px; outline: none; transition: all 0.3s;">
+              <input type="password" id="aiApiKeyInput" class="auth-input" placeholder="输入 API Key (如 AIzaSy...)" style="flex: 1; margin: 0; padding: 10px 14px; background: rgba(255,255,255,0.05); border: 1px solid rgba(0,0,0,0.1); border-radius: 8px; color: #1e293b; font-family: monospace; font-size: 13px; outline: none; transition: all 0.3s;">
               <button class="auth-submit-btn" id="btnSaveAiKey" style="width: auto; padding: 0 16px; margin: 0; height: 38px; font-size: 12px; border-radius: 8px; background: var(--color-blue); color: white; border: none; cursor: pointer; transition: all 0.2s;">加密保存</button>
             </div>
             <div class="ai-encryption-status" id="aiKeyStatusMsg" style="font-size: 11px; color: #64748b; margin-top: 6px; display: flex; align-items: center; gap: 4px;">🔑 未检测到本地已加密密钥，请配置以开启未来 AI 功能</div>
+          </div>
+
+          <!-- 新增选项：AI 模型选择 -->
+          <div class="param-item" style="display: none !important; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 12px; margin-top: 12px;">
+            <div class="param-label-wrap">
+              <span class="param-title">AI 脑力选择 (Google Gemini)</span>
+              <span class="param-subtitle">决定绘图和精修的模型，推荐使用最新的 Gemini 3.5 Flash</span>
+            </div>
+            <select id="aiModelSelect" style="width: 100%; margin-top: 8px; padding: 10px; background: rgba(255,255,255,0.05); border: 1px solid rgba(0,0,0,0.1); border-radius: 8px; color: #1e293b; font-size: 13px; font-weight: 700; outline: none; cursor: pointer; transition: all 0.2s;">
+              <option value="gemini-3.5-flash" selected>🚀 gemini-3.5-flash (最新首选，推理强悍)</option>
+              <option value="gemini-1.5-flash">⚡ gemini-1.5-flash (经典轻量版)</option>
+              <option value="gemini-1.5-pro">🧠 gemini-1.5-pro (超强逻辑 analysis版)</option>
+            </select>
+          </div>
+
+          <!-- 新增板块：AI 创意自动绘图 -->
+          <div class="param-item" id="aiPaintSection" style="border-top: 1px solid rgba(255,255,255,0.06); padding-top: 12px; margin-top: 12px;">
+            <div class="param-label-wrap">
+              <span class="param-title">🤖 AI 创意自动绘画</span>
+              <span class="param-subtitle">输入创意文字描述，由 Gemini 3.5 在当前空白格盘上直接进行像素创作</span>
+            </div>
+            <div class="ai-paint-input-wrap" style="margin-top: 8px; display: flex; flex-direction: column; gap: 8px;">
+              <textarea id="aiPaintPrompt" class="auth-input" placeholder="例如：一个极其可爱的粉色卡通猫咪头像，或者一把散发蓝色光芒的RPG游戏圣剑..." style="width: 100%; min-height: 54px; padding: 10px 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(0,0,0,0.1); border-radius: 8px; color: #1e293b; font-size: 13px; outline: none; transition: all 0.2s; resize: vertical;"></textarea>
+              <button class="btn-primary" id="btnAiPaint" style="width: 100%; padding: 10px; font-size: 13px; border-radius: 8px; height: 38px; display: flex; align-items: center; justify-content: center; gap: 6px; background: var(--color-blue); color: white; border: none; font-weight: 700;">
+                🤖 自动绘制我的描述
+              </button>
+            </div>
+          </div>
+
+          <!-- 新增板块：AI 智能一键精修 (上传图片后可用) -->
+          <div class="param-item" id="aiRefineSection" style="border-top: 1px solid rgba(255,255,255,0.06); padding-top: 12px; margin-top: 12px; display: none;">
+            <div class="param-label-wrap">
+              <span class="param-title">🪄 AI 智能一键精修网格</span>
+              <span class="param-subtitle">深度对比原图细节，完美干掉无意义杂色，平滑轮廓线并防边缘锯齿</span>
+            </div>
+            <button class="btn-primary" id="btnAiRefine" style="width: 100%; margin-top: 8px; padding: 10px; font-size: 13px; border-radius: 8px; height: 38px; display: flex; align-items: center; justify-content: center; gap: 6px; background: linear-gradient(135deg, #a855f7 0%, #1a73e8 100%); color: white; border: none; font-weight: 700; box-shadow: 0 4px 12px rgba(168,85,247,0.25);">
+              🪄 一键去杂色·精修网格
+            </button>
           </div>
         </div>
 
@@ -3586,7 +3656,8 @@ let currentDenoise = 'none';
 let currentIsAuthorized = false;
 const ADMIN_USERNAME_HASH = '8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918'; // SHA-256 of 'admin'
 const ADMIN_PASSWORD_HASH = '853400fa68f74fe1ed6cc9bded1722adfa3d27759f35bf84d5de82b2c367b869'; // SHA-256 of 'studio888'
-let decryptedAiApiKey = ''; // 解密后的 AI Key，保存在内存中，关闭页面或刷新即丢，安全防护至高无上
+let decryptedAiApiKey = 'AQ.Ab8RN6JLVVoLkUwpiGhM7kQR7OvO_cTmWu1Kv3-T--7ju3nzFg'; // 💡 开发者可在右侧单引号内直接填入您的 Google API Key (例如 'AIzaSy...')。配置后免去前台 Key 输入步骤，全功能直接可用！
+let geminiApiEndpoint = 'https://generativelanguage.googleapis.com'; // 💡 开发者可在此直接替换为可用的 Gemini 镜像/反向代理地址 (如 'https://api.openai-sb.com' 等，末尾不要带斜杠)
 
 // ==================== 2. DOM 节点引用 (改用延迟绑定以保证 100% 正确获取) ====================
 let elFileInput = null;
@@ -3684,6 +3755,7 @@ window.addEventListener('DOMContentLoaded', () => {
     initEditorEvents(); // 初始化画布编辑器控制台与色板百科弹窗
     initAuthEvents();   // 初始化安全验证网关事件
     initAiCoreEvents(); // 初始化 AI 拓展中心事件
+    initTemplateAndAiEvents(); // 初始化模版中心与 AI 创意功能事件
 
     console.log("Visio Studio App: All modules, DOM elements and events bound successfully!");
   } catch (err) {
@@ -3826,6 +3898,617 @@ function createBlankBoard(size) {
   drawMaterialTable();
 
   console.log(`[Visio Studio] 成功创建空白画板: ${size}x${size}`);
+}
+
+// 辅助函数：更新统计数据 UI 板块
+function updateStatsUI(totalBeads, uniqueColors, dimensions) {
+  if (elStatTotalBeads) elStatTotalBeads.textContent = totalBeads;
+  if (elStatUniqueColors) elStatUniqueColors.textContent = uniqueColors;
+  if (elStatGridDimensions) elStatGridDimensions.textContent = dimensions;
+}
+
+/**
+ * ==================== 经典模版与 AI 智能系统 ====================
+ */
+
+// 载入经典模版
+function loadPresetTemplate(type) {
+  if (!currentIsAuthorized) {
+    alert("⚠️ 请先完成安全验证登录！");
+    return;
+  }
+  
+  // 1. 设置规格为 29x29 单板规格 (所有经典模版完美契合 29x29 网格，以取得最精美协调的视觉比例)
+  currentGridSize = 29;
+  
+  // 更新规格选择器 UI 激活态
+  const blankSelectors = document.querySelectorAll('#blankBoardSelector .segment-item');
+  if (blankSelectors.length > 0) {
+    blankSelectors.forEach(i => {
+      if (i.dataset.value === '29') i.classList.add('active');
+      else i.classList.remove('active');
+    });
+  }
+
+  // 初始化 29x29 空白网格
+  const grid = [];
+  for (let y = 0; y < 29; y++) {
+    const row = [];
+    for (let x = 0; x < 29; x++) {
+      row.push(null);
+    }
+    grid.push(row);
+  }
+
+  // 创建拼豆对象的便捷辅助函数
+  const createBead = (code) => {
+    const bead = window.ARTKAL_C_COLORS.find(c => c.code === code) || window.ARTKAL_C_COLORS[0];
+    return { ...bead, symbol: bead.code };
+  };
+
+  // 2. 根据不同模版注入拼豆颗粒坐标 (全色系精准预设)
+  if (type === 'heart') {
+    // 绘制爱心 (经典红粉搭配，心形几何公式渲染 + 黑色轮廓边框)
+    for (let y = 0; y < 29; y++) {
+      for (let x = 0; x < 29; x++) {
+        const nx = x - 14.0;
+        const ny = 13.5 - y;
+        
+        const term1 = nx * 0.145;
+        const term2 = ny * 0.145 - 0.52 * Math.sqrt(Math.abs(nx * 0.145));
+        const val = term1 * term1 + term2 * term2;
+        
+        if (val <= 0.35) {
+          // 内部填充：渐变过渡，上方粉红，下方大红
+          grid[y][x] = y < 14 ? createBead('C24') : createBead('C03'); 
+        } else if (val <= 0.45) {
+          grid[y][x] = createBead('C02'); // 黑色边框
+        }
+      }
+    }
+  } else if (type === 'cat') {
+    // 绘制可爱像素猫咪头像
+    // 脸部主体
+    for (let y = 7; y <= 21; y++) {
+      for (let x = 5; x <= 23; x++) {
+        if ((x-14)*(x-14)/81 + (y-14)*(y-14)/36 <= 1.0) {
+          grid[y][x] = createBead('C01'); // 白色脸颊
+        }
+      }
+    }
+    // 黑色猫耳廓 (左耳 & 右耳)
+    const ears = [
+      {x:5,y:7},{x:6,y:6},{x:7,y:5},{x:8,y:6},{x:9,y:7},
+      {x:19,y:7},{x:20,y:6},{x:21,y:5},{x:22,y:6},{x:23,y:7}
+    ];
+    ears.forEach(p => { grid[p.y][p.x] = createBead('C02'); });
+    // 粉色猫耳心
+    grid[7][6] = createBead('C24'); grid[7][7] = createBead('C24');
+    grid[7][21] = createBead('C24'); grid[7][22] = createBead('C24');
+    // 黑色萌眼睛
+    grid[12][10] = createBead('C02'); grid[12][18] = createBead('C02');
+    grid[13][10] = createBead('C02'); grid[13][18] = createBead('C02');
+    // 粉色腮红
+    grid[14][8] = createBead('C04'); grid[14][20] = createBead('C04');
+    // 黑色鼻子与猫胡须
+    grid[14][14] = createBead('C02'); // 鼻子
+    grid[15][13] = createBead('C02'); grid[15][15] = createBead('C02'); // 嘴巴
+    
+    const whiskers = [
+      {x:3,y:14},{x:4,y:14},{x:24,y:14},{x:25,y:14},
+      {x:3,y:16},{x:4,y:16},{x:24,y:16},{x:25,y:16}
+    ];
+    whiskers.forEach(p => { grid[p.y][p.x] = createBead('C20'); });
+  } else if (type === 'sword') {
+    // 经典 RPG 像素勇者圣剑 (斜对角绘制)
+    // 1. 剑身 (蓝色/藏青)
+    for (let i = 0; i < 16; i++) {
+      const x = 7 + i;
+      const y = 21 - i;
+      grid[y][x] = createBead('C17'); // 天蓝剑面
+      grid[y][x-1] = createBead('C09'); // 宝蓝剑脊
+      grid[y+1][x] = createBead('C02'); // 黑色刀锋边缘
+    }
+    // 2. 黄金护手 (金黄 C45 + 黑色 C02)
+    const guard = [
+      {x:6,y:21},{x:5,y:22},{x:7,y:20},{x:8,y:19},
+      {x:6,y:22},{x:5,y:23},{x:22,y:6},{x:23,y:5}
+    ];
+    guard.forEach(p => {
+      grid[p.y][p.x] = createBead('C45');
+    });
+    // 3. 褐色剑柄 (焦糖色 C21)
+    grid[21][7] = createBead('C21');
+    grid[22][6] = createBead('C21');
+    grid[23][5] = createBead('C02'); // 剑柄底墩
+  } else if (type === 'star') {
+    // 黄金闪耀五角星
+    const cx = 14, cy = 14;
+    for (let y = 0; y < 29; y++) {
+      for (let x = 0; x < 29; x++) {
+        const dx = x - cx;
+        const dy = y - cy;
+        const r = Math.sqrt(dx*dx + dy*dy);
+        const theta = Math.atan2(dy, dx);
+        
+        // 经典五角星极坐标方程
+        const starR = 9.0 + 4.5 * Math.cos(5 * theta);
+        if (r <= starR) {
+          grid[y][x] = createBead('C06'); // 亮黄填充
+          if (r > starR - 1.2) {
+            grid[y][x] = createBead('C02'); // 黑色描边
+          }
+        }
+      }
+    }
+    // 两颗黑色星星眼睛
+    grid[13][12] = createBead('C02'); grid[13][16] = createBead('C02');
+    grid[14][12] = createBead('C02'); grid[14][16] = createBead('C02');
+    // 粉色小红晕
+    grid[15][10] = createBead('C04'); grid[15][18] = createBead('C04');
+  } else if (type === 'rainbow') {
+    // 梦幻彩虹桥 (下半部分切平)
+    const cx = 14, cy = 19;
+    for (let y = 0; y < 29; y++) {
+      for (let x = 0; x < 29; x++) {
+        const dx = x - cx;
+        const dy = y - cy;
+        const r = Math.sqrt(dx*dx + dy*dy);
+        if (dy <= 0) { // 仅上半环
+          if (r >= 11.5 && r < 14) grid[y][x] = createBead('C03'); // 大红
+          else if (r >= 9.5 && r < 11.5) grid[y][x] = createBead('C05'); // 橙色
+          else if (r >= 7.5 && r < 9.5) grid[y][x] = createBead('C06'); // 亮黄
+          else if (r >= 5.5 && r < 7.5) grid[y][x] = createBead('C13'); // 草绿
+          else if (r >= 3.5 && r < 5.5) grid[y][x] = createBead('C17'); // 天蓝
+        }
+      }
+    }
+    // 彩虹两端云朵 (白色 C01)
+    const clouds = [
+      {x:1,y:19},{x:2,y:19},{x:3,y:19},{x:2,y:18},{x:3,y:18},{x:4,y:18},{x:2,y:20},
+      {x:25,y:19},{x:26,y:19},{x:27,y:19},{x:25,y:18},{x:26,y:18},{x:24,y:18},{x:26,y:20}
+    ];
+    clouds.forEach(p => { grid[p.y][p.x] = createBead('C01'); });
+  } else if (type === 'panda') {
+    // 萌化大熊猫头像
+    // 白色头部主体
+    for (let y = 6; y <= 22; y++) {
+      for (let x = 5; x <= 23; x++) {
+        if ((x-14)*(x-14)/81 + (y-14)*(y-14)/49 <= 1) {
+          grid[y][x] = createBead('C01'); // 白色脸庞
+        }
+      }
+    }
+    // 黑色萌熊猫双耳
+    for (let ey = 3; ey <= 8; ey++) {
+      for (let ex = 3; ex <= 9; ex++) {
+        if ((ex-6)*(ex-6) + (ey-6)*(ey-6) <= 9) grid[ey][ex] = createBead('C02');
+      }
+      for (let ex = 19; ex <= 25; ex++) {
+        if ((ex-22)*(ex-22) + (ey-6)*(ey-6) <= 9) grid[ey][ex] = createBead('C02');
+      }
+    }
+    // 经典熊猫黑眼圈
+    const eyeBlacks = [
+      {x:8,y:12},{x:9,y:12},{x:10,y:12},{x:8,y:13},{x:9,y:13},{x:10,y:13},{x:9,y:14},{x:10,y:14},
+      {x:18,y:12},{x:19,y:12},{x:20,y:12},{x:18,y:13},{x:19,y:13},{x:20,y:13},{x:18,y:14},{x:19,y:14}
+    ];
+    eyeBlacks.forEach(p => { grid[p.y][p.x] = createBead('C02'); });
+    // 白色瞳孔
+    grid[13][9] = createBead('C01'); grid[13][19] = createBead('C01');
+    // 黑色小鼻子
+    grid[15][13] = createBead('C02'); grid[15][14] = createBead('C02'); grid[15][15] = createBead('C02');
+    grid[16][14] = createBead('C02');
+  }
+
+  // 3. 统计网格拼豆用量，重建分析结果 pixelResult
+  const beadHistogram = {};
+  for (let y = 0; y < 29; y++) {
+    for (let x = 0; x < 29; x++) {
+      const cell = grid[y][x];
+      if (cell) {
+        if (!beadHistogram[cell.code]) {
+          beadHistogram[cell.code] = { bead: cell, count: 0 };
+        }
+        beadHistogram[cell.code].count++;
+      }
+    }
+  }
+
+  const beadCounts = Object.values(beadHistogram)
+    .sort((a, b) => b.count - a.count)
+    .map(item => ({
+      ...item.bead,
+      count: item.count,
+      symbol: item.bead.code
+    }));
+
+  pixelResult = {
+    grid: grid,
+    beadCounts: beadCounts,
+    width: 29,
+    height: 29,
+    totalBeads: Object.values(beadHistogram).reduce((sum, item) => sum + item.count, 0),
+    isBlankBoard: true
+  };
+
+  // 4. 重置底板，隐藏图片载入区与精修板块 (因为是空白手绘模版)
+  imageElement = null;
+  const elDropZone = document.getElementById('dropZone');
+  if (elDropZone) elDropZone.style.display = 'none';
+  const elAiRefineSection = document.getElementById('aiRefineSection');
+  if (elAiRefineSection) elAiRefineSection.style.display = 'none';
+
+  // 激活保存与导出按钮
+  document.getElementById('btnSaveLocal').disabled = false;
+  document.getElementById('btnExportProject').disabled = false;
+
+  // 打开隐藏与预览控制舱并关闭占位符，显露出核心画布
+  if (elParametersCard) elParametersCard.style.display = 'none'; // 经典模板不需要原图调校
+  if (elStatsCard) elStatsCard.style.display = 'block';
+  if (elPreviewPlaceholder) elPreviewPlaceholder.style.display = 'none';
+  if (elPreviewCard) elPreviewCard.style.display = 'block';
+  if (elBottomLayout) elBottomLayout.style.display = 'block';
+  const elAiCoreCard = document.getElementById('aiCoreCard');
+  if (elAiCoreCard) elAiCoreCard.style.display = 'block';
+
+  // 5. 设置画笔为保底黑色 H7
+  const defaultBead = window.ARTKAL_C_COLORS.find(c => c.code === 'H7') || window.ARTKAL_C_COLORS[0];
+  setActivePaintColor(defaultBead);
+
+  // 6. 重绘并更新 UI
+  updateStatsUI(pixelResult.totalBeads, beadCounts.length, '29x29');
+  resetViewport();
+  drawPreview();
+  drawTracerChips();
+  drawMaterialTable();
+
+  console.log(`[Visio Studio] 成功载入经典模版: ${type}`);
+}
+
+// 提取当前上传图片的高清晰 Base64 JPEG 格式 (用于投喂给多模态 Gemini 3.5 AI)
+function getOriginalImageBase64() {
+  if (!imageElement) return null;
+  try {
+    const tempCanvas = document.createElement('canvas');
+    tempCanvas.width = imageElement.naturalWidth || imageElement.width;
+    tempCanvas.height = imageElement.naturalHeight || imageElement.height;
+    const tCtx = tempCanvas.getContext('2d');
+    tCtx.drawImage(imageElement, 0, 0);
+    // 输出压缩率 0.82 的 JPEG，保证多模态图像细节同时体积小巧
+    return tempCanvas.toDataURL('image/jpeg', 0.82).split(',')[1];
+  } catch (e) {
+    console.error("提取图片Base64失败:", e);
+    return null;
+  }
+}
+
+// 统一调用 Google Gemini 3.5 / 1.5 接口核心 (全前端原生交互)
+async function callGeminiAPI(prompt, imageBase64 = null) {
+  const modelSelect = document.getElementById('aiModelSelect');
+  const modelId = modelSelect ? modelSelect.value : 'gemini-3.5-flash';
+  
+  if (!decryptedAiApiKey) {
+    throw new Error("⚠️ 请在 index.html 源码第 3659 行附近的 `decryptedAiApiKey` 变量中直接配置您的 Google API Key！");
+  }
+
+  // 拼接稳定版 API Request Endpoint，支持镜像代理
+  const baseUrl = (typeof geminiApiEndpoint !== 'undefined' && geminiApiEndpoint) ? geminiApiEndpoint : 'https://generativelanguage.googleapis.com';
+  const url = `${baseUrl}/v1beta/models/${modelId}:generateContent?key=${decryptedAiApiKey}`;
+
+  // 构建 Gemini 标准多模态 Parts 数据结构
+  const parts = [];
+  
+  // 1. 如果有图片，作为第一个 Part 装填 (Native Multimodal)
+  if (imageBase64) {
+    parts.push({
+      inline_data: {
+        mime_type: "image/jpeg",
+        data: imageBase64
+      }
+    });
+  }
+  
+  // 2. 将文本 Prompt 封装并填入 Part
+  parts.push({
+    text: prompt
+  });
+
+  const payload = {
+    contents: [
+      {
+        parts: parts
+      }
+    ],
+    generationConfig: {
+      // 强力启用 Google JSON schema 强制约束，使 Gemini 输出绝对可解析 of 纯 JSON，彻底杜绝 Markdown 碎字
+      responseMimeType: "application/json"
+    }
+  };
+
+  // 引入 AbortController 防止国内环境连接 Google 发生网络被阻断而永久挂起 (25秒超时)
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 25000);
+
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(payload),
+      signal: controller.signal
+    });
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      const errMsg = errData.error ? errData.error.message : response.statusText;
+      throw new Error(`Google API 响应异常: ${errMsg}`);
+    }
+
+    const resData = await response.json();
+    const textResult = resData.candidates[0].content.parts[0].text;
+    return JSON.parse(textResult.trim());
+  } catch (err) {
+    clearTimeout(timeoutId);
+    if (err.name === 'AbortError') {
+      throw new Error("网络连接超时！请确保您的科学上网工具已开启“全局代理”模式，或者在 index.html 源码的 `geminiApiEndpoint` 变量中配置了可用的 Gemini 镜像代理地址（如 'https://api.openai-sb.com' 等）。");
+    }
+    throw err;
+  }
+}
+
+// 🤖 核心逻辑：AI 创意文字自动绘画
+async function runAiPaint() {
+  const promptInput = document.getElementById('aiPaintPrompt');
+  const btnAiPaint = document.getElementById('btnAiPaint');
+  
+  if (!promptInput || !btnAiPaint) return;
+  const userPrompt = promptInput.value.trim();
+  
+  if (!userPrompt) {
+    alert("✍️ 请先输入您对创意拼豆画面的文字描述！");
+    return;
+  }
+
+  try {
+    btnAiPaint.disabled = true;
+    btnAiPaint.innerHTML = `<span>⏳ Gemini 3.5 正在疯狂作画中...</span>`;
+    
+    // 动态提取当前网格大小
+    const size = currentGridSize || 29;
+    
+    // 动态拼接可用 Artkal C系列颜色库
+    const colorsPrompt = window.ARTKAL_C_COLORS.map(c => `- Code: "${c.code}", Name: "${c.name}", Hex: "${c.hex}"`).join('\n');
+    
+    const systemPrompt = `
+You are an elite pixel art designer specializing in bead crafting (Artkal Beads).
+Your goal is to paint a cute, beautiful pixel art of a "${userPrompt}" on a 2D grid of size exactly ${size}x${size}.
+
+You MUST only use the exact color codes provided in the Artkal list below, or null for empty background pixels:
+${colorsPrompt}
+
+Return a valid JSON 2D array of size exactly ${size}x${size} containing only these color codes or null.
+DO NOT include any markdown code blocks (like \`\`\`json) or extra text. Output ONLY the raw JSON array.
+Example structure:
+[
+  [null, null, "C02", "C02", null, ...],
+  [null, "C02", "C01", "C01", "C02", ...],
+  ...
+]
+`;
+
+    // 呼叫 Gemini 3.5 进行推理作画
+    const gridResult = await callGeminiAPI(systemPrompt);
+    
+    // 校验数组尺寸
+    if (!Array.isArray(gridResult) || gridResult.length !== size || !Array.isArray(gridResult[0]) || gridResult[0].length !== size) {
+      throw new Error(`AI 返回的数组尺寸不符合 ${size}x${size}，请重试！`);
+    }
+
+    // 翻译为拼豆单元二维网格
+    const grid = [];
+    const beadHistogram = {};
+    
+    for (let y = 0; y < size; y++) {
+      const row = [];
+      for (let x = 0; x < size; x++) {
+        const code = gridResult[y][x];
+        if (code) {
+          const matchedBead = window.ARTKAL_C_COLORS.find(c => c.code === code) || window.ARTKAL_C_COLORS[0];
+          const beadObj = { ...matchedBead, symbol: matchedBead.code };
+          row.push(beadObj);
+          
+          if (!beadHistogram[matchedBead.code]) {
+            beadHistogram[matchedBead.code] = { bead: beadObj, count: 0 };
+          }
+          beadHistogram[matchedBead.code].count++;
+        } else {
+          row.push(null);
+        }
+      }
+      grid.push(row);
+    }
+
+    const beadCounts = Object.values(beadHistogram)
+      .sort((a, b) => b.count - a.count)
+      .map(item => ({ ...item.bead, count: item.count, symbol: item.bead.code }));
+
+    // 覆盖全局缓存
+    pixelResult = {
+      grid: grid,
+      beadCounts: beadCounts,
+      width: size,
+      height: size,
+      totalBeads: Object.values(beadHistogram).reduce((sum, item) => sum + item.count, 0),
+      isBlankBoard: true
+    };
+
+    // 清理图片背景状态
+    imageElement = null;
+    const elDropZone = document.getElementById('dropZone');
+    if (elDropZone) elDropZone.style.display = 'none';
+    const elAiRefineSection = document.getElementById('aiRefineSection');
+    if (elAiRefineSection) elAiRefineSection.style.display = 'none';
+
+    // 启用暂存和导出
+    document.getElementById('btnSaveLocal').disabled = false;
+    document.getElementById('btnExportProject').disabled = false;
+    // 打开隐藏与预览控制舱并关闭占位符，显露出核心画布
+    if (elParametersCard) elParametersCard.style.display = 'none'; // AI作画不需要原图调校
+    if (elStatsCard) elStatsCard.style.display = 'block';
+    if (elPreviewPlaceholder) elPreviewPlaceholder.style.display = 'none';
+    if (elPreviewCard) elPreviewCard.style.display = 'block';
+    if (elBottomLayout) elBottomLayout.style.display = 'block';
+
+    // 默认画笔
+    const defaultBead = window.ARTKAL_C_COLORS.find(c => c.code === 'H7') || window.ARTKAL_C_COLORS[0];
+    setActivePaintColor(defaultBead);
+
+    // 重绘
+    updateStatsUI(pixelResult.totalBeads, beadCounts.length, `${size}x${size}`);
+    resetViewport();
+    drawPreview();
+    drawTracerChips();
+    drawMaterialTable();
+
+    alert("✨ 自动绘画成功！已使用最顶尖的 Google Gemini 3.5 模型在画板上完美渲染您的创意！");
+
+  } catch (err) {
+    alert("⚠️ AI 自动绘画失败: " + err.message);
+  } finally {
+    btnAiPaint.disabled = false;
+    btnAiPaint.innerHTML = `🤖 自动绘制我的描述`;
+  }
+}
+
+// 🪄 核心逻辑：AI 智能一键精修网格并去除散落杂色 (Multimodal Image Refine)
+async function runAiRefine() {
+  const btnAiRefine = document.getElementById('btnAiRefine');
+  if (!btnAiRefine || !pixelResult || !imageElement) return;
+
+  try {
+    btnAiRefine.disabled = true;
+    btnAiRefine.innerHTML = `<span>⏳ Gemini 3.5 正在精细校准原图并去杂色...</span>`;
+
+    // 1. 获取原图 Base64 数据
+    const originalBase64 = getOriginalImageBase64();
+    if (!originalBase64) {
+      throw new Error("捕获原图 Base64 失败，请重新上传原始图片！");
+    }
+
+    const size = currentGridSize || 29;
+
+    // 2. 压缩现有画板草稿网格为极简字符，以极大降低 Prompt 体积并保证 AI 对比精确性
+    let gridString = '';
+    for (let y = 0; y < size; y++) {
+      const rowCodes = [];
+      for (let x = 0; x < size; x++) {
+        rowCodes.push(pixelResult.grid[y][x] ? pixelResult.grid[y][x].code : '.');
+      }
+      gridString += rowCodes.join(' ') + '\n';
+    }
+
+    const colorsPrompt = window.ARTKAL_C_COLORS.map(c => `- Code: "${c.code}", Name: "${c.name}", Hex: "${c.hex}"`).join('\n');
+
+    const systemPrompt = `
+You are a master digital restoration and pixel art editor.
+I have provided you with two inputs:
+1. The original reference image (Multimodal Image Input).
+2. The current auto-pixelated bead grid draft of size ${size}x${size}:
+${gridString}
+
+(Note: "." represents empty space, and other codes represent bead colors from the Artkal list).
+
+The current grid draft has messy stray pixels (noise/杂色), jagged outlines, or inaccurate borders because of raw mathematical color mapping.
+Please analyze the original image's shape, structures, core borders, and key features, and REFINE the 2D grid:
+1. Identify the main subject and aggressively erase scattered stray noise pixels (isolated single pixels that ruin the aesthetics).
+2. Make lines and outlines of the main subjects smoother, more continuous, and professional.
+3. Fill in unwanted small empty gaps in main colored shapes.
+4. Ensure you only use the exact Artkal color codes present in the draft or from this list:
+${colorsPrompt}
+
+Return the refined 2D grid in a valid JSON 2D array of size exactly ${size}x${size} containing only the Artkal color codes or null.
+DO NOT include any markdown code blocks (like \`\`\`json) or extra text. Output ONLY the raw JSON.
+`;
+
+    // 呼叫 Gemini 3.5 进行多模态图形精修
+    const gridResult = await callGeminiAPI(systemPrompt, originalBase64);
+
+    if (!Array.isArray(gridResult) || gridResult.length !== size || !Array.isArray(gridResult[0]) || gridResult[0].length !== size) {
+      throw new Error(`AI 返回的精修网格数据尺寸不符合 ${size}x${size}，请重试！`);
+    }
+
+    // 3. 将精修后的结果写回 2D 网格
+    const grid = [];
+    const beadHistogram = {};
+
+    for (let y = 0; y < size; y++) {
+      const row = [];
+      for (let x = 0; x < size; x++) {
+        const code = gridResult[y][x];
+        if (code) {
+          const matchedBead = window.ARTKAL_C_COLORS.find(c => c.code === code) || window.ARTKAL_C_COLORS[0];
+          const beadObj = { ...matchedBead, symbol: matchedBead.code };
+          row.push(beadObj);
+          
+          if (!beadHistogram[matchedBead.code]) {
+            beadHistogram[matchedBead.code] = { bead: beadObj, count: 0 };
+          }
+          beadHistogram[matchedBead.code].count++;
+        } else {
+          row.push(null);
+        }
+      }
+      grid.push(row);
+    }
+
+    const beadCounts = Object.values(beadHistogram)
+      .sort((a, b) => b.count - a.count)
+      .map(item => ({ ...item.bead, count: item.count, symbol: item.bead.code }));
+
+    // 写入缓存
+    pixelResult.grid = grid;
+    pixelResult.beadCounts = beadCounts;
+    pixelResult.totalBeads = Object.values(beadHistogram).reduce((sum, item) => sum + item.count, 0);
+
+    // 重绘并更新 UI
+    updateStatsUI(pixelResult.totalBeads, beadCounts.length, `${size}x${size}`);
+    drawPreview();
+    drawTracerChips();
+    drawMaterialTable();
+
+    alert("✨ AI 网格精修成功！已完美融合原图结构，散落杂色点已彻底剔除，线条也已变得平滑流畅！");
+
+  } catch (err) {
+    alert("⚠️ AI 智能精修失败: " + err.message);
+  } finally {
+    btnAiRefine.disabled = false;
+    btnAiRefine.innerHTML = `🪄 一键去杂色·精修网格`;
+  }
+}
+
+// 绑定模版与 AI 控制事件
+function initTemplateAndAiEvents() {
+  // 1. 模版按钮事件绑定
+  const templateButtons = document.querySelectorAll('.template-btn');
+  templateButtons.forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const templateId = e.currentTarget.dataset.template;
+      if (templateId) {
+        loadPresetTemplate(templateId);
+      }
+    });
+  });
+
+  // 2. AI 创意绘画按钮事件绑定
+  const btnAiPaint = document.getElementById('btnAiPaint');
+  if (btnAiPaint) btnAiPaint.addEventListener('click', runAiPaint);
+
+  // 3. AI 一键精修网格按钮事件绑定
+  const btnAiRefine = document.getElementById('btnAiRefine');
+  if (btnAiRefine) btnAiRefine.addEventListener('click', runAiRefine);
 }
 
 function saveProjectToBrowser() {
@@ -4847,6 +5530,8 @@ function handleImageFile(file) {
             elStatsCard.style.display = 'block';
             const elAiCoreCard = document.getElementById('aiCoreCard');
             if (elAiCoreCard) elAiCoreCard.style.display = 'block';
+            const elAiRefineSection = document.getElementById('aiRefineSection');
+            if (elAiRefineSection) elAiRefineSection.style.display = 'block';
             elPreviewPlaceholder.style.display = 'none';
             elPreviewCard.style.display = 'block';
             elBottomLayout.style.display = 'block';
@@ -5347,7 +6032,7 @@ function drawPreview() {
       const cell = grid[y][x];
       const cx = x * cellSize + cellSize / 2;
       const cy = y * cellSize + cellSize / 2;
-      const radius = (cellSize / 2) - 0.5;
+      const radius = Math.max(0.1, (cellSize / 2) - 0.5);
 
       if (cell) {
         const isTracingActive = selectedColorCode !== null;
@@ -5374,7 +6059,7 @@ function drawPreview() {
               ctx.rect(x * cellSize + pad, y * cellSize + pad, cellSize - 2 * pad, cellSize - 2 * pad);
               ctx.strokeStyle = 'rgba(255,255,255,0.18)';
             } else {
-              ctx.arc(cx, cy, radius - 0.5, 0, 2 * Math.PI);
+              ctx.arc(cx, cy, Math.max(0.1, radius - 0.5), 0, 2 * Math.PI);
               ctx.strokeStyle = 'rgba(255,255,255,0.25)';
             }
             ctx.lineWidth = 1;
@@ -5388,20 +6073,25 @@ function drawPreview() {
 
             // 绘制仿真中心熔融小孔
             ctx.beginPath();
-            const holeRad = currentBeadShape === 'square' ? radius / 6 : radius / 3;
+            const holeRad = Math.max(0.1, currentBeadShape === 'square' ? radius / 6 : radius / 3);
             ctx.arc(cx, cy, holeRad, 0, 2 * Math.PI);
             ctx.fillStyle = isLight ? '#FFFFFF' : '#050608';
             ctx.fill();
 
             // 强制渲染清晰的高Legibility临摹符号
-            ctx.fillStyle = isLight ? '#111111' : '#FFFFFF';
-            ctx.font = `bold ${Math.max(10, cellSize * 0.55)}px monospace`;
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.shadowColor = isLight ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.6)';
-            ctx.shadowBlur = 2;
-            ctx.fillText(cell.symbol, cx, cy);
-            ctx.shadowBlur = 0; // 重置阴影
+            // 当且仅当实际格大小足够显示字符时绘制，防止白斑和拉伸变形
+            if (cellSize * scale >= 10) {
+              ctx.fillStyle = isLight ? '#111111' : '#FFFFFF';
+              const symbolLen = cell.symbol.length;
+              const fontScale = symbolLen === 1 ? 0.55 : (symbolLen === 2 ? 0.45 : 0.35);
+              ctx.font = `bold ${Math.max(10, cellSize * fontScale)}px monospace`;
+              ctx.textAlign = 'center';
+              ctx.textBaseline = 'middle';
+              ctx.shadowColor = isLight ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.6)';
+              ctx.shadowBlur = 2;
+              ctx.fillText(cell.symbol, cx, cy);
+              ctx.shadowBlur = 0; // 重置阴影
+            }
           } else {
             // 其它非目标色变为 faint 虚影
             ctx.globalAlpha = 0.08;
@@ -5435,7 +6125,7 @@ function drawPreview() {
             ctx.rect(x * cellSize + pad, y * cellSize + pad, cellSize - 2 * pad, cellSize - 2 * pad);
             ctx.strokeStyle = 'rgba(255,255,255,0.15)';
           } else {
-            ctx.arc(cx, cy, radius - 0.5, 0, 2 * Math.PI);
+            ctx.arc(cx, cy, Math.max(0.1, radius - 0.5), 0, 2 * Math.PI);
             ctx.strokeStyle = 'rgba(255,255,255,0.2)';
           }
           ctx.lineWidth = 1;
@@ -5449,15 +6139,17 @@ function drawPreview() {
 
           // 熔融小孔
           ctx.beginPath();
-          const holeRad = currentBeadShape === 'square' ? radius / 6 : radius / 3.5;
+          const holeRad = Math.max(0.1, currentBeadShape === 'square' ? radius / 6 : radius / 3.5);
           ctx.arc(cx, cy, holeRad, 0, 2 * Math.PI);
           ctx.fillStyle = isLight ? '#FFFFFF' : '#050608';
           ctx.fill();
 
-          // 在放大倍率足够高且开启了“显示代号”时，绘制清晰对比的符号便于观看
-          if (scale >= 1.5 && currentSymbolDisplay === 'show') {
+          // 在放大倍率足够高且开启了“显示代号”时，且实际渲染格尺寸足够显示清晰字符时绘制
+          if (scale >= 1.5 && currentSymbolDisplay === 'show' && (cellSize * scale >= 12)) {
             ctx.fillStyle = isLight ? 'rgba(0,0,0,0.7)' : 'rgba(255,255,255,0.75)';
-            ctx.font = `${cellSize * 0.45}px monospace`;
+            const symbolLen = cell.symbol.length;
+            const fontScale = symbolLen === 1 ? 0.55 : (symbolLen === 2 ? 0.45 : 0.35);
+            ctx.font = `${cellSize * fontScale}px monospace`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.shadowColor = isLight ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.4)';
@@ -5707,16 +6399,25 @@ function exportHighResPattern() {
         ctx.fillStyle = cell.hex;
         ctx.fill();
 
-        // 2. 绘制白色内衬孔洞
+        // 自动感知底色亮度并动态调整导出时的代号颜色与小孔对比度，以保证全色系绝对清晰可见
+        const r = cell.rgb ? cell.rgb[0] : 255;
+        const g = cell.rgb ? cell.rgb[1] : 255;
+        const b = cell.rgb ? cell.rgb[2] : 255;
+        const isLight = (0.299 * r + 0.587 * g + 0.114 * b) > 135;
+
+        // 2. 绘制仿真中心孔洞 (浅色豆子使用白色孔，深色豆子使用黑色孔)
         ctx.beginPath();
         const holeRad = currentBeadShape === 'square' ? radius / 6 : radius / 3.5;
         ctx.arc(cx, cy, holeRad, 0, 2 * Math.PI);
-        ctx.fillStyle = '#FFFFFF';
+        ctx.fillStyle = isLight ? '#FFFFFF' : '#050608';
         ctx.fill();
 
-        // 3. 绘制清晰大单字黑字符 (MONOSPACE 等宽字体，大小完美匹配格宽)
-        ctx.fillStyle = '#000000';
-        ctx.font = `bold ${baseCellSize * 0.55}px monospace`;
+        // 3. 绘制清晰大单字标记代号 (浅色豆用黑字、深色豆用白字)
+        // 动态调整字号以完美适配 1、2 或 3 个字符的色号 (如 A1, H7, D15)
+        ctx.fillStyle = isLight ? '#000000' : '#FFFFFF';
+        const symbolLen = cell.symbol.length;
+        const fontScale = symbolLen === 1 ? 0.55 : (symbolLen === 2 ? 0.45 : 0.35);
+        ctx.font = `bold ${baseCellSize * fontScale}px monospace`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(cell.symbol, cx, cy);

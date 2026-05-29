@@ -49,6 +49,10 @@
         <view class="tool-btn glass-card" hover-class="glass-card-hover" bindtap="resetZoom" title="复位">
           <text class="tool-icon">⟲</text>
         </view>
+        <!-- 色号代号切换显示按钮 -->
+        <view class="tool-btn glass-card {{showSymbol ? 'active-tool-btn' : ''}}" hover-class="glass-card-hover" bindtap="toggleSymbol" title="显示/隐藏代号">
+          <text class="tool-icon" style="font-size: 32rpx; line-height: 1;">{{showSymbol ? '🔊' : '🔇'}}</text>
+        </view>
       </view>
     </view>
 

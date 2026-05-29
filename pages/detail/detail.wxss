@@ -113,6 +113,12 @@
   font-weight: bold;
 }
 
+.active-tool-btn {
+  border-color: var(--color-teal) !important;
+  background: rgba(0, 242, 254, 0.18) !important;
+  box-shadow: 0 8px 20px rgba(0, 242, 254, 0.3) !important;
+}
+
 /* ==========================================================================
    3. 横向滚动临摹选色卡 (Tracer Panel)
    ========================================================================== */

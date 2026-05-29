@@ -6,7 +6,8 @@ Page({
     navBarHeight: 44,
     pattern: null,
     selectedColorCode: null, // 当前选中的高亮色号 (null 为普通查看模式)
-    checkedCodes: {}        // 用户标记“已购齐/已准备好”的色号 map
+    checkedCodes: {},       // 用户标记“已购齐/已准备好”的色号 map
+    showSymbol: false       // 是否在普通模式下显示拼豆色号 (默认隐藏，双击或点击悬浮按钮可切换)
   },
 
   // 内部临时变量，保存 Canvas 节点与 Context 引用，避免频繁查询
@@ -105,7 +106,7 @@ Page({
     const { canvas, ctx, canvasWidth, dpr } = this;
     if (!canvas || !ctx) return;
 
-    const { pattern, selectedColorCode } = this.data;
+    const { pattern, selectedColorCode, showSymbol } = this.data;
     const { scale, offsetX, offsetY } = this;
     const size = pattern.width;
     const grid = pattern.grid;
@@ -147,7 +148,7 @@ Page({
       ctx.stroke();
     }
 
-    // 2. 每5格和每10格绘制粗的网格对齐分割线
+    // 2. 每5格 and 每10格绘制粗的网格对齐分割线
     ctx.strokeStyle = 'rgba(0, 242, 254, 0.15)';
     ctx.lineWidth = 1.2;
     for (let i = 0; i <= size; i += 5) {
@@ -200,11 +201,16 @@ Page({
               ctx.fill();
 
               // 绘制临摹用高Legibility辅助字符 (浅色豆用黑字、深色豆用白字)
-              ctx.fillStyle = isLight ? '#111111' : '#ffffff';
-              ctx.font = `bold ${Math.max(10, baseCellSize * 0.55)}px sans-serif`;
-              ctx.textAlign = 'center';
-              ctx.textBaseline = 'middle';
-              ctx.fillText(cell.symbol, cx, cy);
+              // 实际渲染单元格尺寸 (baseCellSize * scale) 大于等于 10 像素时才进行绘制，防止小尺寸拥挤变形
+              if (baseCellSize * scale >= 10) {
+                ctx.fillStyle = isLight ? '#111111' : '#ffffff';
+                const symbolLen = cell.symbol.length;
+                const fontScale = symbolLen === 1 ? 0.55 : (symbolLen === 2 ? 0.45 : 0.35);
+                ctx.font = `bold ${Math.max(10, baseCellSize * fontScale)}px sans-serif`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(cell.symbol, cx, cy);
+              }
             } else {
               // 其它颜色大幅淡化 (仅保留 faint 虚影防迷路)
               ctx.globalAlpha = 0.08;
@@ -233,10 +239,13 @@ Page({
             ctx.fillStyle = isLight ? '#ffffff' : '#0b0c10';
             ctx.fill();
 
-            // 若放大倍率足够高，在豆子中心清晰显示对比字符
-            if (scale >= 1.5) {
+            // 若放大倍率足够高且手动开启了“显示代号”，在豆子中心清晰显示对比字符
+            // 要求实际格尺寸大于等于 12 像素，从根本上杜绝极小字号下由于字体渲染产生的白斑和变形
+            if (scale >= 1.5 && showSymbol && (baseCellSize * scale >= 12)) {
               ctx.fillStyle = isLight ? 'rgba(0,0,0,0.7)' : 'rgba(255,255,255,0.7)';
-              ctx.font = `${baseCellSize * 0.45}px sans-serif`;
+              const symbolLen = cell.symbol.length;
+              const fontScale = symbolLen === 1 ? 0.55 : (symbolLen === 2 ? 0.45 : 0.35);
+              ctx.font = `${baseCellSize * fontScale}px sans-serif`;
               ctx.textAlign = 'center';
               ctx.textBaseline = 'middle';
               ctx.fillText(cell.symbol, cx, cy);
@@ -414,6 +423,18 @@ Page({
   },
 
   /**
+   * 切换普通查看模式下的色号显示状态
+   */
+  toggleSymbol() {
+    const showSymbol = !this.data.showSymbol;
+    this.setData({ showSymbol }, () => {
+      this.drawGrid();
+    });
+    // 轻微震动反馈
+    wx.vibrateShort({ type: 'light' });
+  },
+
+  /**
    * 一键导出高清带水印图纸并保存至手机相册
    */
   savePatternImage() {
@@ -501,15 +522,24 @@ Page({
               ctx.fillStyle = cell.hex;
               ctx.fill();
 
-              // 2. 绘制白色内衬孔洞
+              // 自动感知底色亮度并动态调整导出时的代号颜色与小孔对比度，以保证全色系绝对清晰可见
+              const r = cell.rgb ? cell.rgb[0] : 255;
+              const g = cell.rgb ? cell.rgb[1] : 255;
+              const b = cell.rgb ? cell.rgb[2] : 255;
+              const isLight = (0.299 * r + 0.587 * g + 0.114 * b) > 135;
+
+              // 2. 绘制仿真中心孔洞 (浅色豆子使用白色孔，深色豆子使用黑色孔)
               ctx.beginPath();
               ctx.arc(cx, cy, radius / 3.5, 0, 2 * Math.PI);
-              ctx.fillStyle = '#FFFFFF';
+              ctx.fillStyle = isLight ? '#FFFFFF' : '#050608';
               ctx.fill();
 
-              // 3. 绘制清晰的临摹黑字大符号 (字体放大)
-              ctx.fillStyle = '#000000';
-              ctx.font = `bold ${baseCellSize * 0.55}px monospace`;
+              // 3. 绘制清晰的临摹大代号 (浅色豆用黑字、深色豆用白字)
+              // 动态调整字号以完美适配 1、2 或 3 个字符的色号 (如 A1, H7, D15)
+              ctx.fillStyle = isLight ? '#000000' : '#FFFFFF';
+              const symbolLen = cell.symbol.length;
+              const fontScale = symbolLen === 1 ? 0.55 : (symbolLen === 2 ? 0.45 : 0.35);
+              ctx.font = `bold ${baseCellSize * fontScale}px monospace`;
               ctx.textAlign = 'center';
               ctx.textBaseline = 'middle';
               ctx.fillText(cell.symbol, cx, cy);
