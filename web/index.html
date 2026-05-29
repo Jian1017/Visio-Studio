@@ -4317,22 +4317,33 @@ Your goal is to paint a cute, beautiful pixel art of a "${userPrompt}" on a 2D g
 You MUST only use the exact color codes provided in the Artkal list below, or null for empty background pixels:
 ${colorsPrompt}
 
-Return a valid JSON 2D array of size exactly ${size}x${size} containing only these color codes or null.
-DO NOT include any markdown code blocks (like \`\`\`json) or extra text. Output ONLY the raw JSON array.
+Return a valid JSON object containing a single key "flat" whose value is a flat, comma-separated string of exactly ${size * size} elements (corresponding to the grid scanned row-by-row, from top-left to bottom-right). Each element must be either an Artkal color code or "null".
+DO NOT include any markdown code blocks or extra text. Output ONLY the raw JSON object.
 Example structure:
-[
-  [null, null, "C02", "C02", null, ...],
-  [null, "C02", "C01", "C01", "C02", ...],
-  ...
-]
+{
+  "flat": "null,null,C02,C02,null,C01,C01,C02,..."
+}
 `;
 
     // 呼叫 Gemini 3.5 进行推理作画
     const gridResult = await callGeminiAPI(systemPrompt);
     
-    // 校验数组尺寸
-    if (!Array.isArray(gridResult) || gridResult.length !== size || !Array.isArray(gridResult[0]) || gridResult[0].length !== size) {
-      throw new Error(`AI 返回的数组尺寸不符合 ${size}x${size}，请重试！`);
+    // 兼容解析 1D flat 格式或旧的 2D 阵列格式
+    let flatArray = [];
+    if (gridResult && typeof gridResult.flat === 'string') {
+      flatArray = gridResult.flat.split(',').map(s => s.trim());
+    } else if (Array.isArray(gridResult)) {
+      if (Array.isArray(gridResult[0])) {
+        flatArray = gridResult.flat();
+      } else {
+        flatArray = gridResult;
+      }
+    } else {
+      throw new Error("AI 返回的格式异常，请重试！");
+    }
+
+    if (flatArray.length !== size * size) {
+      throw new Error(`AI 返回的像素数据大小为 ${flatArray.length}，不符合 ${size}x${size} = ${size * size}，请重试！`);
     }
 
     // 翻译为拼豆单元二维网格
@@ -4342,7 +4353,8 @@ Example structure:
     for (let y = 0; y < size; y++) {
       const row = [];
       for (let x = 0; x < size; x++) {
-        const code = gridResult[y][x];
+        const rawCode = flatArray[y * size + x];
+        const code = (rawCode === 'null' || !rawCode) ? null : rawCode;
         if (code) {
           const matchedBead = window.ARTKAL_C_COLORS.find(c => c.code === code) || window.ARTKAL_C_COLORS[0];
           const beadObj = { ...matchedBead, symbol: matchedBead.code };
@@ -4457,15 +4469,33 @@ Please analyze the original image's shape, structures, core borders, and key fea
 4. Ensure you only use the exact Artkal color codes present in the draft or from this list:
 ${colorsPrompt}
 
-Return the refined 2D grid in a valid JSON 2D array of size exactly ${size}x${size} containing only the Artkal color codes or null.
-DO NOT include any markdown code blocks (like \`\`\`json) or extra text. Output ONLY the raw JSON.
+Return a valid JSON object containing a single key "flat" whose value is a flat, comma-separated string of exactly ${size * size} elements (corresponding to the refined grid scanned row-by-row, from top-left to bottom-right). Each element must be either an Artkal color code or "null".
+DO NOT include any markdown code blocks or extra text. Output ONLY the raw JSON object.
+Example structure:
+{
+  "flat": "null,null,C02,C02,null,C01,C01,C02,..."
+}
 `;
 
     // 呼叫 Gemini 3.5 进行多模态图形精修
     const gridResult = await callGeminiAPI(systemPrompt, originalBase64);
 
-    if (!Array.isArray(gridResult) || gridResult.length !== size || !Array.isArray(gridResult[0]) || gridResult[0].length !== size) {
-      throw new Error(`AI 返回的精修网格数据尺寸不符合 ${size}x${size}，请重试！`);
+    // 兼容解析 1D flat 格式或旧的 2D 阵列格式
+    let flatArray = [];
+    if (gridResult && typeof gridResult.flat === 'string') {
+      flatArray = gridResult.flat.split(',').map(s => s.trim());
+    } else if (Array.isArray(gridResult)) {
+      if (Array.isArray(gridResult[0])) {
+        flatArray = gridResult.flat();
+      } else {
+        flatArray = gridResult;
+      }
+    } else {
+      throw new Error("AI 返回的格式异常，请重试！");
+    }
+
+    if (flatArray.length !== size * size) {
+      throw new Error("AI 返回的精修网格像素数据大小为 " + flatArray.length + "，不符合 " + size + "x" + size + " = " + (size * size) + "，请重试！");
     }
 
     // 3. 将精修后的结果写回 2D 网格
@@ -4475,7 +4505,8 @@ DO NOT include any markdown code blocks (like \`\`\`json) or extra text. Output 
     for (let y = 0; y < size; y++) {
       const row = [];
       for (let x = 0; x < size; x++) {
-        const code = gridResult[y][x];
+        const rawCode = flatArray[y * size + x];
+        const code = (rawCode === 'null' || !rawCode) ? null : rawCode;
         if (code) {
           const matchedBead = window.ARTKAL_C_COLORS.find(c => c.code === code) || window.ARTKAL_C_COLORS[0];
           const beadObj = { ...matchedBead, symbol: matchedBead.code };
