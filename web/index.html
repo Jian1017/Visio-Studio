@@ -327,9 +327,9 @@
               <span class="param-subtitle">决定绘图和精修的模型，推荐使用最新的 Gemini 3.5 Flash</span>
             </div>
             <select id="aiModelSelect" style="width: 100%; margin-top: 8px; padding: 10px; background: rgba(255,255,255,0.05); border: 1px solid rgba(0,0,0,0.1); border-radius: 8px; color: #1e293b; font-size: 13px; font-weight: 700; outline: none; cursor: pointer; transition: all 0.2s;">
-              <option value="gemini-3.5-flash" selected>🚀 gemini-3.5-flash (最新首选，推理强悍)</option>
-              <option value="gemini-1.5-flash">⚡ gemini-1.5-flash (经典轻量版)</option>
-              <option value="gemini-1.5-pro">🧠 gemini-1.5-pro (超强逻辑 analysis版)</option>
+              <option value="gemini-1.5-flash" selected>🚀 gemini-1.5-flash (快速轻量，推荐首选)</option>
+              <option value="gemini-2.0-flash">⚡ gemini-2.0-flash (最新次世代，速度极快)</option>
+              <option value="gemini-1.5-pro">🧠 gemini-1.5-pro (深度逻辑分析，推理强悍)</option>
             </select>
           </div>
 
@@ -4186,7 +4186,7 @@ function getOriginalImageBase64() {
 // 统一调用 Google Gemini 3.5 / 1.5 接口核心 (支持本地 Direct 调用与 Vercel Serverless 后端云代理双轨切换)
 async function callGeminiAPI(prompt, imageBase64 = null) {
   const modelSelect = document.getElementById('aiModelSelect');
-  const modelId = modelSelect ? modelSelect.value : 'gemini-3.5-flash';
+  const modelId = modelSelect ? modelSelect.value : 'gemini-1.5-flash';
 
   // 构建 Gemini 标准多模态 Parts 数据结构
   const parts = [];

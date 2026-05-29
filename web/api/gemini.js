@@ -48,7 +48,7 @@ module.exports = async function handler(req, res) {
     }
 
     // 3. 构建 Google Gemini 官方端点 URL
-    const targetModel = modelId || 'gemini-3.5-flash';
+    const targetModel = modelId || 'gemini-1.5-flash';
     const googleUrl = `https://generativelanguage.googleapis.com/v1beta/models/${targetModel}:generateContent?key=${apiKey}`;
 
     // 4. 发起代理请求 (Vercel Node.js 18+ 环境原生支持 global fetch)
