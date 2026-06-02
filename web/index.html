@@ -4315,9 +4315,18 @@ async function runAiPaint() {
   if (!promptInput || !btnAiPaint) return;
 
   const size = currentGridSize || 29;
+  const isLocalEnv = location.protocol === 'file:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+
   if (size > 58) {
-    alert("⚠️ AI 自动绘画限制提示\n\n由于 87x87 / 104x104 属于超大型拼豆规格（单图纸包含高达 " + (size * size) + " 颗拼豆），这已超出了 Google Gemini 与云端代理中转服务器的单次 Token 连续生成极限（会导致不可避免的连接超时或数据丢失）。\n\n💡 推荐方案：\n1. 请先切换至【单板 (29x29)】或【四联板 (58x58)】规格下使用 AI 创意绘图，生成效果最佳且极其稳定；\n2. AI 生成完毕后，您可以通过导出 .bead 工程文件备份本地，或在画布上进行二次创作。\n\n* 本地浏览器的“常规图片扫描识别”（K-Means 像素化）完全不受任何尺寸限制，支持 104x104 等超大拼豆图纸的秒级无损扫描还原！");
-    return;
+    if (!isLocalEnv) {
+      // 线上环境强制拦截，防 10s Vercel Serverless 超时 504 报错
+      alert("⚠️ AI 自动绘画线上限制提示\n\n由于 87x87 / 104x104 属于超大型规格（包含高达 " + (size * size) + " 颗拼豆），线上请求会受到 Vercel 免费版云端中转服务器 the 10 秒强制网关执行限制（100% 会超时崩溃）。\n\n💡 推荐方案：\n如果您想完美体验超大规格 AI 绘画，只需在本地使用浏览器双击打开本项目的 index.html 文件（或通过 VS Code Live Server 访问），在 AI 面板输入您的 API Key。本地直连模式完全不受 Vercel 超时限制，可完美生成！");
+      return;
+    } else {
+      // 本地环境友好提示并允许尝试，因为没有 10s Serverless 限制
+      const proceed = confirm(`💡 本地大规格 AI 自动绘画提示\n\n当前检测到您处于【本地直连开发环境】。本地直连模式下，我们将完全解除 Vercel 中转的 10 秒超时硬性枷锁。\n\n由于 ${size}x${size} 规格包含高达 ${size * size} 颗拼豆，Google Gemini 连续生成数万字符大约需要等待 45秒 到 2分钟（取决于 AI Token 吐出速度物理上限）。\n\n是否开启本地直连通道并开始耐心等待？`);
+      if (!proceed) return;
+    }
   }
 
   const userPrompt = promptInput.value.trim();
@@ -4463,9 +4472,18 @@ async function runAiRefine() {
   if (!btnAiRefine || !pixelResult || !imageElement) return;
 
   const size = currentGridSize || 29;
+  const isLocalEnv = location.protocol === 'file:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+
   if (size > 58) {
-    alert("⚠️ AI 智能精修限制提示\n\n由于 87x87 / 104x104 属于超大型拼豆规格（单图纸包含高达 " + (size * size) + " 颗拼豆），这已超出了 Google Gemini 与云端代理中转服务器的多模态 Token 连续推理极限（会引起连接超时或数据丢失）。\n\n💡 推荐方案：\n1. 推荐在【单板 (29x29)】或【四联板 (58x58)】规格下使用“一键精修”功能，在此规格下生成效果最佳且极其稳定；\n2. 自动生成完毕后，您可以通过导出 .bead 工程文件备份本地，并在新建 104x104 等超大画布时载入使用。\n\n* 本地浏览器的“常规图片扫描识别”（K-Means 像素化）完全不受任何尺寸限制，支持 104x104 等超大拼豆图纸的秒级无损扫描还原！");
-    return;
+    if (!isLocalEnv) {
+      // 线上环境强制拦截，防 10s Vercel Serverless 超时 504 报错
+      alert("⚠️ AI 智能精修线上限制提示\n\n由于 87x87 / 104x104 属于超大型规格（包含高达 " + (size * size) + " 颗拼豆），线上请求会受到 Vercel 免费版云端中转服务器的 10 秒强制网关执行限制（100% 会超时崩溃）。\n\n💡 推荐方案：\n如果您想完美体验超大图纸 AI 精修，只需在本地使用浏览器双击打开本项目的 index.html 文件（或通过 VS Code Live Server 访问），在 AI 面板输入您的 API Key。本地直连模式完全不受 Vercel 超时限制，可完美生成！");
+      return;
+    } else {
+      // 本地环境友好提示并允许尝试，因为没有 10s Serverless 限制
+      const proceed = confirm(`💡 本地大规格 AI 智能精修提示\n\n当前检测到您处于【本地直连开发环境】。本地直连模式下，我们将完全解除 Vercel 中转的 10 秒超时硬性枷锁。\n\n由于 ${size}x${size} 规格包含高达 ${size * size} 颗拼豆，Google Gemini 多模态精修比对需要等待 45秒 到 2分钟（取决于 AI Token 吐出速度物理上限）。\n\n是否开启本地直连通道并开始耐心等待？`);
+      if (!proceed) return;
+    }
   }
 
   try {
