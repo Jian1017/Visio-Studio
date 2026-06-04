@@ -4265,7 +4265,11 @@ async function callGeminiAPI(prompt, imageBase64 = null) {
     } else {
       // 线上生产部署模式：通过本站托管的 Vercel Serverless 后端安全中转接口调用，绝对防止密钥泄露！
       console.log("[Visio Studio AI] 启用 Vercel 后端安全中转接口，隐藏密钥并全力加速服务...");
-      const backendUrl = '/api/gemini';
+      // 如果本地双击打开 file://，相对路径 /api/gemini 会变成 file:///api/gemini 导致 Failed to fetch。
+      // 我们智能识别并将其自动降级指向线上 Vercel 服务器绝对路径。
+      const backendUrl = (location.protocol === 'file:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1')
+        ? 'https://visio-studio.vercel.app/api/gemini'
+        : '/api/gemini';
       
       response = await fetch(backendUrl, {
         method: "POST",
