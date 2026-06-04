@@ -4237,14 +4237,15 @@ async function callGeminiAPI(prompt, imageBase64 = null) {
     }
   };
 
-  // 引入 AbortController 防止网络延迟导致连接永久挂起 (60秒超时，保证 AI 完整输出大规模像素网格)
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 60000);
-
-  // 智能双轨制切换逻辑：
-  // 1. 判断是否是本地环境并且配置了有效的本地开发 Key (以 AIzaSy 开头)
+  // 智能双轨制切换逻辑判断
   const isLocalEnv = location.protocol === 'file:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1';
   const hasValidLocalKey = decryptedAiApiKey && decryptedAiApiKey.startsWith('AIzaSy');
+
+  // 引入 AbortController 防止连接永久挂起。
+  // 本地直连大规格网格（104x104）生成时，耗时通常为 45s-2min，因此本地直连模式下将超时时间放宽至 5分钟 (300,000ms)；线上代理中转保持 60秒。
+  const controller = new AbortController();
+  const maxTimeoutMs = (isLocalEnv && hasValidLocalKey) ? 300000 : 60000;
+  const timeoutId = setTimeout(() => controller.abort(), maxTimeoutMs);
 
   let response;
   try {
@@ -4305,7 +4306,8 @@ async function callGeminiAPI(prompt, imageBase64 = null) {
   } catch (err) {
     clearTimeout(timeoutId);
     if (err.name === 'AbortError') {
-      throw new Error("网络连接超时（60秒已满）！AI 绘图或大网格精修生成大规模 JSON 阵列耗时较长，请确保您的科学上网工具已开启“全局代理”模式且节点通畅。如果是线上部署，请确保 Vercel 后端配置的 `GEMINI_API_KEY` 有效且未超频。");
+      const activeTimeoutSec = (isLocalEnv && hasValidLocalKey) ? '5分钟' : '60秒';
+      throw new Error(`网络连接超时（${activeTimeoutSec}已满）！AI 绘图或大网格精修生成大规模 JSON 阵列耗时较长，请确保您的科学上网工具已开启“全局代理”模式且节点通畅。如果是线上部署，请确保 Vercel 后端配置的 \`GEMINI_API_KEY\` 有效且未超频。`);
     }
     throw err;
   }
